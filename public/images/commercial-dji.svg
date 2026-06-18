@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-label="Commercial drone">
+  <rect width="1200" height="675" fill="#242ef7"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1"><path d="M0 168 H1200 M0 336 H1200 M0 504 H1200 M300 0 V675 M600 0 V675 M900 0 V675"/></g>
+  <g fill="#ffffff">
+    <rect x="540" y="296" width="120" height="40" rx="10"/>
+    <rect x="420" y="308" width="130" height="12" rx="6"/>
+    <rect x="650" y="308" width="130" height="12" rx="6"/>
+    <circle cx="400" cy="314" r="34" fill="none" stroke="#ffffff" stroke-width="8"/>
+    <circle cx="800" cy="314" r="34" fill="none" stroke="#ffffff" stroke-width="8"/>
+    <rect x="585" y="336" width="30" height="34" rx="6"/>
+  </g>
+  <text x="60" y="618" font-family="monospace" font-size="26" letter-spacing="3" fill="#ffffff">COMMERCIAL DRONE TECHNOLOGY</text>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-label="Defence ISR">
+  <rect width="1200" height="675" fill="#0b2566"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1"><path d="M0 168 H1200 M0 336 H1200 M0 504 H1200 M300 0 V675 M600 0 V675 M900 0 V675"/></g>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.65" stroke-width="5"><circle cx="600" cy="312" r="120"/><circle cx="600" cy="312" r="70"/><path d="M600 172 V452 M460 312 H740"/></g>
+  <circle cx="660" cy="262" r="10" fill="#66ffb2"/>
+  <text x="60" y="618" font-family="monospace" font-size="26" letter-spacing="3" fill="#ffffff">DEFENCE / ISR / TACTICAL UAV</text>
+</svg>

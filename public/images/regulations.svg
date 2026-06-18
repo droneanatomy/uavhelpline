@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-label="Regulations">
+  <rect width="1200" height="675" fill="#242ef7"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1"><path d="M0 168 H1200 M0 336 H1200 M0 504 H1200 M300 0 V675 M600 0 V675 M900 0 V675"/></g>
+  <g>
+    <path d="M600 200 L690 240 V312 C690 368 650 404 600 424 C550 404 510 368 510 312 V240 Z" fill="#ffffff" fill-opacity="0.14" stroke="#ffffff" stroke-width="5"/>
+    <path d="M560 312 l28 28 l54 -64" fill="none" stroke="#66ffb2" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="60" y="618" font-family="monospace" font-size="26" letter-spacing="3" fill="#ffffff">REGULATIONS &amp; CERTIFICATION</text>
+</svg>

@@ -1,0 +1,47 @@
+{
+  "_note": "Trusted source registry for the Collect step. feed = best-known RSS path; verify before use. category maps to the site's beats. tier: 1=every run, 2=daily, 3=weekly.",
+  "sources": [
+    { "name": "DroneDJ", "url": "https://dronedj.com", "feed": "https://dronedj.com/feed/", "category": "commercial-drones", "tier": 1 },
+    { "name": "DRONELIFE", "url": "https://dronelife.com", "feed": "https://dronelife.com/feed/", "category": "news", "tier": 1 },
+    { "name": "sUAS News", "url": "https://www.suasnews.com", "feed": "https://www.suasnews.com/feed/", "category": "news", "tier": 1 },
+    { "name": "Commercial UAV News", "url": "https://www.commercialuavnews.com", "feed": "https://www.commercialuavnews.com/feed/", "category": "commercial-drones", "tier": 1 },
+    { "name": "Unmanned Systems Technology", "url": "https://www.unmannedsystemstechnology.com", "feed": "https://www.unmannedsystemstechnology.com/feed/", "category": "components", "tier": 1 },
+    { "name": "UAS Magazine", "url": "https://uasmagazine.com", "feed": "https://uasmagazine.com/feed/", "category": "news", "tier": 2 },
+    { "name": "DroneZon", "url": "https://www.dronezon.com", "feed": "https://www.dronezon.com/feed/", "category": "components", "tier": 3 },
+    { "name": "The Drone Girl", "url": "https://www.thedronegirl.com", "feed": "https://www.thedronegirl.com/feed/", "category": "news", "tier": 3 },
+
+    { "name": "Janes", "url": "https://www.janes.com", "feed": "", "category": "defence-tech", "tier": 1 },
+    { "name": "Shephard Media", "url": "https://www.shephardmedia.com", "feed": "", "category": "defence-tech", "tier": 1 },
+    { "name": "Breaking Defense", "url": "https://breakingdefense.com", "feed": "https://breakingdefense.com/feed/", "category": "defence-tech", "tier": 2 },
+    { "name": "The War Zone", "url": "https://www.twz.com", "feed": "https://www.twz.com/feed", "category": "defence-tech", "tier": 2 },
+    { "name": "Defense News", "url": "https://www.defensenews.com", "feed": "", "category": "defence-tech", "tier": 2 },
+    { "name": "C4ISRNET", "url": "https://www.c4isrnet.com", "feed": "", "category": "defence-tech", "tier": 2 },
+    { "name": "AUVSI", "url": "https://www.auvsi.org", "feed": "", "category": "defence-tech", "tier": 3 },
+    { "name": "Bard Center for the Study of the Drone", "url": "https://dronecenter.bard.edu", "feed": "https://dronecenter.bard.edu/feed/", "category": "defence-tech", "tier": 3 },
+
+    { "name": "IEEE Spectrum (drones)", "url": "https://spectrum.ieee.org/tag/drones", "feed": "", "category": "ai-autonomy", "tier": 2 },
+    { "name": "The Robot Report", "url": "https://www.therobotreport.com", "feed": "https://www.therobotreport.com/feed/", "category": "ai-autonomy", "tier": 2 },
+    { "name": "Uncrewed Aerospace", "url": "https://www.uncrewedaerospace.com", "feed": "", "category": "components", "tier": 3 },
+    { "name": "New Atlas (drones)", "url": "https://newatlas.com/drones", "feed": "", "category": "components", "tier": 3 },
+
+    { "name": "DARPA", "url": "https://www.darpa.mil", "feed": "", "category": "ai-autonomy", "tier": 2 },
+    { "name": "NASA", "url": "https://www.nasa.gov", "feed": "https://www.nasa.gov/feed/", "category": "ai-autonomy", "tier": 3 },
+    { "name": "arXiv cs.RO", "url": "https://arxiv.org/list/cs.RO/recent", "feed": "http://export.arxiv.org/rss/cs.RO", "category": "ai-autonomy", "tier": 3 },
+    { "name": "CSIR", "url": "https://www.csir.res.in", "feed": "", "category": "ai-autonomy", "tier": 3 },
+
+    { "name": "FAA Newsroom", "url": "https://www.faa.gov/newsroom", "feed": "", "category": "regulations", "tier": 1 },
+    { "name": "EASA", "url": "https://www.easa.europa.eu", "feed": "", "category": "regulations", "tier": 2 },
+    { "name": "DGCA India", "url": "https://www.dgca.gov.in", "feed": "", "category": "regulations", "tier": 3 },
+
+    { "name": "Drone Industry Insights", "url": "https://droneii.com", "feed": "https://droneii.com/feed", "category": "analysis", "tier": 2 },
+    { "name": "DroneAnalyst", "url": "https://droneanalyst.com", "feed": "https://droneanalyst.com/feed", "category": "analysis", "tier": 3 },
+    { "name": "IDTechEx", "url": "https://www.idtechex.com", "feed": "", "category": "analysis", "tier": 3 },
+
+    { "name": "DJI Newsroom", "url": "https://www.dji.com/newsroom", "feed": "", "category": "commercial-drones", "tier": 2 },
+    { "name": "Skydio Blog", "url": "https://www.skydio.com/blog", "feed": "", "category": "commercial-drones", "tier": 2 },
+    { "name": "AeroVironment", "url": "https://www.avinc.com", "feed": "", "category": "defence-tech", "tier": 3 },
+    { "name": "Shield AI", "url": "https://shield.ai/news", "feed": "", "category": "defence-tech", "tier": 3 },
+    { "name": "ideaForge", "url": "https://ideaforgetech.com", "feed": "", "category": "commercial-drones", "tier": 3 },
+    { "name": "Anduril", "url": "https://www.anduril.com/news", "feed": "", "category": "defence-tech", "tier": 3 }
+  ]
+}

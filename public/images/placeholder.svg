@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-label="UAVHelpline">
+  <rect width="1200" height="675" fill="#242ef7"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="1"><path d="M0 168 H1200 M0 336 H1200 M0 504 H1200 M300 0 V675 M600 0 V675 M900 0 V675"/></g>
+  <g fill="#ffffff"><circle cx="600" cy="320" r="10"/><rect x="430" y="315" width="150" height="10" rx="5"/><rect x="620" y="315" width="150" height="10" rx="5"/><circle cx="430" cy="320" r="26" fill="none" stroke="#ffffff" stroke-width="6"/><circle cx="770" cy="320" r="26" fill="none" stroke="#ffffff" stroke-width="6"/></g>
+  <text x="60" y="612" font-family="monospace" font-size="26" letter-spacing="3" fill="#ffffff">UAVHELPLINE</text>
+</svg>
