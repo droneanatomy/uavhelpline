@@ -1,4 +1,5 @@
 import "./globals.css";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import { HeaderMetaProvider } from "../components/HeaderMeta";
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
           <SiteFooter />
         </HeaderMetaProvider>
         <Analytics />
+        <SpeedInsights />
         {GA_ID ? <GoogleAnalytics gaId={GA_ID} /> : null}
       </body>
     </html>

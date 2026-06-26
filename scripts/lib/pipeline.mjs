@@ -9,6 +9,7 @@ import {
   sourceCheck,
   dropCovered,
   clusterStories,
+  crossCheck,
   selectStory,
   slugify,
 } from "./filter.mjs";
@@ -49,11 +50,24 @@ export async function runPipeline({
   const clusters = clusterStories(fresh);
   onProgress({ stage: "cluster", detail: `${clusters.length} distinct stories.` });
 
+  // Diagnostics — surfaced on every return so cron/CLI runs are debuggable
+  // (e.g. how many feeds resolved, how many cleared each stage).
+  const stats = {
+    feeds: sourcesCount,
+    recent: recent.length,
+    onTopic: onTopic.length,
+    trusted: checked.length,
+    fresh: fresh.length,
+    clusters: clusters.length,
+    eligible: clusters.filter((c) => crossCheck(c).eligible).length,
+  };
+
   // 5. PASS 2 · CROSS-CHECK + 6. SCORE & SELECT — single best eligible story.
   const selection = selectStory(clusters);
   if (!selection) {
     return {
       picked: false,
+      stats,
       reason:
         "No story cleared cross-check today — nothing corroborated by ≥2 independent trusted sources or a primary source.",
     };
@@ -68,6 +82,7 @@ export async function runPipeline({
     return {
       picked: true,
       dryRun: true,
+      stats,
       slug: slugify(pick.title),
       pick,
       corroboration: pick.corroboration,
@@ -83,6 +98,7 @@ export async function runPipeline({
 
   return {
     picked: true,
+    stats,
     slug,
     saved,
     title: draft.title,
