@@ -33,7 +33,10 @@ your local `.env.local`.
 | `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Public content reads (build + runtime) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Public content reads + admin login |
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Server-side writes (drafts/publish/upload) — **secret** |
-| `ANTHROPIC_API_KEY` | optional | `/admin` "Generate" + "Run pipeline" drafting |
+| `CRON_SECRET` | ✅ for cron | Authenticates the daily `/api/cron` AI run — **secret** |
+| `NEXT_PUBLIC_SITE_URL` | recommended | Canonical origin for sitemap/robots/OG (e.g. `https://uavhelpline.com`) |
+| `NEXT_PUBLIC_GA_ID` | optional | Google Analytics 4 Measurement ID (`G-XXXXXXXXXX`) |
+| `ANTHROPIC_API_KEY` | optional | `/admin` Generate + Run pipeline + cron drafting |
 | `UAVHELPLINE_DRAFT_MODEL` | optional | Defaults to `claude-sonnet-4-6` |
 | `UAVHELPLINE_RECENCY_DAYS` | optional | RSS recency window |
 | `UAVHELPLINE_MAX_SOURCES` | optional | Source citation cap (default 5) |
@@ -43,6 +46,25 @@ your local `.env.local`.
 
 If the Supabase vars are omitted, the site falls back to reading Markdown files
 in `content/posts/` and the admin write APIs are disabled.
+
+## Daily AI flow (Vercel Cron)
+
+`vercel.json` registers a cron that hits `GET /api/cron` once a day
+(`0 11 * * *` = 11:00 UTC — adjust the schedule there). On each run it executes
+the full verification pipeline (collect → topic filter → source check → cluster →
+cross-check → select → draft) and saves a **draft** to Supabase for review.
+
+- Set **`CRON_SECRET`** in the Vercel env. Vercel automatically sends it as
+  `Authorization: Bearer <CRON_SECRET>`; the route rejects anything else, so the
+  endpoint can't be triggered by the public.
+- Requires Supabase (drafts can't be written to the read-only serverless FS) and
+  `ANTHROPIC_API_KEY` for real drafting (without it, a labeled placeholder draft
+  is saved).
+- **Plan note:** `/api/cron`, `/api/generate`, `/api/run-pipeline` set
+  `maxDuration = 60` (Hobby cap). Long web-research drafts can approach that;
+  on **Pro** raise these to `300`. Hobby also limits crons to once per day.
+- **Analytics:** `<Analytics />` (Vercel Web Analytics) needs no key — enable it
+  under Project → Analytics. GA loads only when `NEXT_PUBLIC_GA_ID` is set.
 
 ## Notes
 

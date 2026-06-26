@@ -1,5 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { CATEGORIES } from "../lib/categories";
+import { useHeaderMeta } from "./HeaderMeta";
+import ReadingProgress from "./ReadingProgress";
+import SearchBox from "./SearchBox";
 
 const label = (slug) => CATEGORIES.find((c) => c.slug === slug)?.label || slug;
 const LEFT_BEATS = ["defence-tech", "commercial-drones"];
@@ -20,47 +27,95 @@ function Beats({ side, beats }) {
   );
 }
 
-export default function SiteHeader() {
+function Logo() {
   return (
-    <header className="masthead">
-      <div className="masthead-content">
-        <ul className="masthead-links">
-          <li><Link href="/section/database">About</Link></li>
-          <li><Link href="/section/news">Latest</Link></li>
-          <li><Link href="/articles/weekly-digest-2026-06-05">Newsletter</Link></li>
-        </ul>
+    <div className="masthead-branding">
+      <Link href="/" className="masthead-branding__logo" aria-label="UAVHelpline home">
+        <img src="/uavhelpline-logo.png" alt="UAVHelpline" />
+      </Link>
+    </div>
+  );
+}
 
-        <div className="masthead-branding">
-          <Link href="/" className="masthead-branding__logo" aria-label="UAVHelpline home">
-            uãvhëlplíne
-          </Link>
-        </div>
-
-        <div className="masthead-navigation">
-          <div className="masthead-navigation__cta">
-            <Link href="/admin" className="button">
-              <span>Sign In</span>
-            </Link>
-          </div>
-          <button className="search-icon" aria-label="Search" type="button">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </button>
-          {/* <button className="masthead-navigation__open" aria-label="Toggle menu" type="button" aria-expanded="false">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          </button> */}
-        </div>
+function Nav() {
+  return (
+    <div className="masthead-navigation">
+      <div className="masthead-navigation__cta">
+        <Link href="/admin" className="button">
+          <span>Sign In</span>
+        </Link>
       </div>
+      <SearchBox />
+    </div>
+  );
+}
 
-      <Beats side="mobile" beats={ALL_BEATS} />
-      <Beats side="left" beats={LEFT_BEATS} />
-      <Beats side="right" beats={RIGHT_BEATS} />
-    </header>
+export default function SiteHeader() {
+  const pathname = usePathname();
+  const { meta } = useHeaderMeta();
+  const isHome = pathname === "/";
+  const isArticle = Boolean(pathname && pathname.startsWith("/articles/"));
+
+  // On article pages, swap the eyebrow from section → headline once the title
+  // has scrolled out of view (RoW behavior).
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    if (isHome) return;
+    const onScroll = () => setScrolled(window.scrollY > 220);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isHome]);
+
+  // Home keeps the full centered masthead with category beats.
+  if (isHome) {
+    return (
+      <header className="masthead">
+        <div className="masthead-content">
+          <ul className="masthead-links">
+            <li><Link href="/section/database">About</Link></li>
+            <li><Link href="/section/news">Latest</Link></li>
+            <li><Link href="/articles/weekly-digest-2026-06-05">Newsletter</Link></li>
+          </ul>
+          <Logo />
+          <Nav />
+        </div>
+        <Beats side="mobile" beats={ALL_BEATS} />
+        <Beats side="left" beats={LEFT_BEATS} />
+        <Beats side="right" beats={RIGHT_BEATS} />
+      </header>
+    );
+  }
+
+  // Non-home: compact sticky header — logo left, eyebrow center, nav right.
+  const section = meta?.section;
+  const sectionHref = meta?.sectionHref;
+  const headline = meta?.headline;
+  const showHeadline = isArticle && scrolled && Boolean(headline);
+
+  return (
+    <>
+      {isArticle && <ReadingProgress />}
+      <header className="masthead masthead--article">
+        <div className="masthead-content">
+          <Logo />
+          <div className="masthead-eyebrow">
+            {section &&
+              (sectionHref ? (
+                <Link className="eyebrow-section" href={sectionHref}>{section}</Link>
+              ) : (
+                <span className="eyebrow-section">{section}</span>
+              ))}
+            {showHeadline && (
+              <>
+                <span className="eyebrow-sep" aria-hidden="true">/</span>
+                <span className="eyebrow-headline">{headline}</span>
+              </>
+            )}
+          </div>
+          <Nav />
+        </div>
+      </header>
+    </>
   );
 }

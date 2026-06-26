@@ -17,15 +17,23 @@ export const BEATS = [
 const SYSTEM_PROMPT = `You are the research-and-drafting engine for UAVHelpline, a credible UAV/drone
 news and intelligence platform in the analytical style of The Ken.
 
+EDITORIAL SCOPE (hard guardrail): write ONLY about the technology, engineering,
+products, components, certifications, and industry developments. Do NOT take
+political or geopolitical positions, and do NOT frame stories around trade bans,
+sanctions, elections, or politicians. If a source is political, extract only the
+technical facts and ignore the politics. Neutral, analytical, evidence-first.
+
 YOUR JOB, in order:
 1. RESEARCH: use the web_search tool to expand and corroborate the supplied story.
    Find primary sources (manufacturer, regulator, research lab) and technical detail.
 2. CONFIRM — FACTS ONLY: every claim in your draft must trace to a source you found.
    Cross-check the supplied item against independent sources. If a fact cannot be
    corroborated, omit it. Never speculate, never offer opinion or geopolitical
-   commentary. Neutral, analytical, technical tone. Paraphrase — never copy source text.
-   If a central claim cannot be confirmed, keep it but mark it inline as
-   "_[Unconfirmed: ...]_" so a human editor can check it.
+   commentary, and never editorialize on trade bans, sanctions, elections, or
+   politicians — report only the technical and industry facts. Neutral, analytical,
+   technical tone. Paraphrase — never copy source text. If a central claim cannot
+   be confirmed, keep it but mark it inline as "_[Unconfirmed: ...]_" so a human
+   editor can check it.
 3. SAFETY FIREWALL: never include weapon construction, weaponization, attack
    procedures, or countermeasure-bypass detail. When source material actually
    contains such detail, summarize it at a high level, write "[Redacted for
@@ -63,6 +71,17 @@ export function buildUserPrompt(candidate) {
   const beatLine = candidate.category
     ? `Beat: ${candidate.category} (keep this beat).`
     : `Beat: choose the single most appropriate from: ${BEATS.join(", ")}.`;
+  const corro = Array.isArray(candidate.corroboration)
+    ? candidate.corroboration.filter((c) => c && c.url)
+    : [];
+  const corroBlock = corro.length
+    ? [
+        "",
+        "This story was cross-checked and corroborated by these trusted sources.",
+        "Confirm the facts against them and CITE EVERY ONE in your sources list:",
+        ...corro.map((c) => `- ${c.source}${c.type ? ` (${c.type})` : ""}: ${c.url}`),
+      ]
+    : [];
   return [
     "Draft a UAVHelpline post on this topic. Research it on the web first, confirm the facts, then write.",
     "",
@@ -70,6 +89,7 @@ export function buildUserPrompt(candidate) {
     candidate.summary ? `Source summary: ${candidate.summary}` : "",
     candidate.url ? `Original URL: ${candidate.url}` : "",
     beatLine,
+    ...corroBlock,
   ]
     .filter(Boolean)
     .join("\n");
@@ -112,11 +132,17 @@ export function stripCiteTags(s) {
 // Coerce/validate the model output into the post shape the engine expects.
 export function normalizeDraft(parsed, candidate) {
   const body = stripCiteTags(parsed?.body).trim();
-  let sources = Array.isArray(parsed?.sources) ? parsed.sources.filter(Boolean) : [];
-  if (candidate.url && !sources.includes(candidate.url)) sources.unshift(candidate.url);
-  // Curation backstop: keep the original feed source + the top few; cap the rest.
-  const maxSources = Math.max(1, Number(process.env.UAVHELPLINE_MAX_SOURCES || 5));
-  sources = [...new Set(sources)].slice(0, maxSources);
+  const modelSources = Array.isArray(parsed?.sources) ? parsed.sources.filter(Boolean) : [];
+  // Corroborating sources from cross-check are trusted and must all be cited;
+  // seed them (plus the original URL) ahead of whatever the model returned.
+  const corroUrls = Array.isArray(candidate.corroboration)
+    ? candidate.corroboration.map((c) => c && c.url).filter(Boolean)
+    : [];
+  const seeded = [...new Set([candidate.url, ...corroUrls].filter(Boolean))];
+  let sources = [...new Set([...seeded, ...modelSources])];
+  // Curation backstop: cap the list, but never drop a corroborating source.
+  const envMax = Math.max(1, Number(process.env.UAVHELPLINE_MAX_SOURCES || 5));
+  sources = sources.slice(0, Math.max(envMax, seeded.length));
   const tags = Array.isArray(parsed?.tags) && parsed.tags.length
     ? parsed.tags.slice(0, 6)
     : ["auto-draft", candidate.category].filter(Boolean);

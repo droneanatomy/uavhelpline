@@ -45,6 +45,7 @@ export function normalizeItem(item, source) {
     url: item.link || item.guid || "",
     source: source.name,
     category: source.category,
+    type: source.type || "news",
     tier: source.tier,
     publishedAt: item.isoDate || item.pubDate || null,
   };

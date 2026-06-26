@@ -5,7 +5,7 @@ export default function ArticleCard({ post }) {
   return (
     <article className="card">
       <Link href={`/articles/${post.slug}`}>
-        <img src={post.image} alt={post.title} />
+        <img src={post.image} alt={post.title} loading="lazy" />
       </Link>
       <Link
         href={`/section/${post.category}`}

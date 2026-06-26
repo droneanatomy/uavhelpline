@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { normalizeItem, withinRecency, mapLimit } from "./collect.mjs";
 
-const SOURCE = { name: "DroneDJ", category: "commercial-drones", tier: 1 };
+const SOURCE = { name: "DroneDJ", category: "commercial-drones", type: "news", tier: 1 };
 
 test("normalizeItem maps rss fields onto the engine shape", () => {
   const it = normalizeItem(
@@ -15,6 +15,7 @@ test("normalizeItem maps rss fields onto the engine shape", () => {
     url: "https://x.com/a",
     source: "DroneDJ",
     category: "commercial-drones",
+    type: "news",
     tier: 1,
     publishedAt: "2026-06-14T00:00:00Z",
   });

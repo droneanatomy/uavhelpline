@@ -59,10 +59,113 @@ export function dedupe(items, seenUrls = new Set()) {
   return out;
 }
 
-// ---- Ranking --------------------------------------------------------------
-// Tier dominates (primary/core sources first); recency breaks ties within 72h.
+// ---- PASS 1 · Source check ------------------------------------------------
+// Keep only items whose source is in the trusted registry. Items already come
+// from registry feeds, so this is a guard against anything mis-tagged; if no
+// trusted set is supplied we don't over-filter.
+export function hostOf(u) {
+  try {
+    return new URL(u).host.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+export function sourceCheck(items, trustedNames) {
+  if (!trustedNames || !trustedNames.size) return items;
+  return items.filter((it) => trustedNames.has(it.source));
+}
+
+// Remove already-published URLs and exact-duplicate URLs, but DO keep the same
+// story reported by different outlets (different URLs) — clustering needs them.
+export function dropCovered(items, seenUrls = new Set()) {
+  const seenExact = new Set();
+  const out = [];
+  for (const it of items) {
+    const cu = canonicalUrl(it.url);
+    if (cu && seenUrls.has(cu)) continue;
+    if (cu && seenExact.has(cu)) continue;
+    if (cu) seenExact.add(cu);
+    out.push(it);
+  }
+  return out;
+}
+
+// ---- CLUSTER · group items that describe the same story -------------------
+const STOPWORDS = new Set(
+  ("the a an and or of for to in on with at by from as is are be new first into " +
+    "over its their this that has have had will plus amp more most than up down " +
+    "after before about now says say after amid via what why how it he she they")
+    .split(/\s+/)
+);
+
+export function tokens(text) {
+  return [
+    ...new Set(
+      (text || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]+/g, " ")
+        .split(/\s+/)
+        .filter((w) => w.length > 2 && !STOPWORDS.has(w))
+    ),
+  ];
+}
+
+// Overlap relative to the smaller token set — robust to headline length diffs.
+export function similarity(a, b) {
+  const A = new Set(a);
+  const B = new Set(b);
+  if (!A.size || !B.size) return 0;
+  let inter = 0;
+  for (const t of A) if (B.has(t)) inter++;
+  return inter / Math.min(A.size, B.size);
+}
+
+// Greedy clustering on title tokens. Each cluster keeps its seed item's tokens
+// fixed so matches don't drift as members accumulate.
+export function clusterStories(items, threshold = 0.5) {
+  const clusters = [];
+  for (const it of items) {
+    const tk = tokens(it.title);
+    let best = null;
+    let bestSim = 0;
+    for (const c of clusters) {
+      const sim = similarity(tk, c.tokens);
+      if (sim > bestSim) {
+        bestSim = sim;
+        best = c;
+      }
+    }
+    if (best && bestSim >= threshold) best.items.push(it);
+    else clusters.push({ tokens: tk, items: [it] });
+  }
+  return clusters;
+}
+
+// ---- PASS 2 · Cross-check -------------------------------------------------
+// PRIMARY sources are authoritative on their own (the maker/regulator/lab is the
+// origin of the claim). Everything else needs ≥2 independent trusted outlets.
+export const PRIMARY_TYPES = new Set(["maker", "regulator", "rnd"]);
+export function isPrimary(item) {
+  return PRIMARY_TYPES.has(item?.type);
+}
+
+export function crossCheck(cluster) {
+  const names = new Set();
+  let hasPrimary = false;
+  for (const it of cluster.items) {
+    names.add(it.source);
+    if (isPrimary(it)) hasPrimary = true;
+  }
+  const independent = names.size;
+  return { eligible: independent >= 2 || hasPrimary, independent, hasPrimary };
+}
+
+// ---- SCORE & SELECT -------------------------------------------------------
+const TIER_WEIGHT = { 1: 3, 2: 2, 3: 1 };
+
 export function score(item, now = Date.now()) {
-  const tierWeight = { 1: 3, 2: 2, 3: 1 }[item.tier] || 1;
+  const tierWeight = TIER_WEIGHT[item.tier] || 1;
   let recency = 0;
   if (item.publishedAt) {
     const ageHours = (now - new Date(item.publishedAt).getTime()) / 36e5;
@@ -73,6 +176,45 @@ export function score(item, now = Date.now()) {
 
 export function rankAndPick(items, now = Date.now()) {
   return [...items].sort((a, b) => score(b, now) - score(a, now))[0] || null;
+}
+
+// Confidence = independent-source count + best source tier + primary bonus + recency.
+export function scoreCluster(cluster, now = Date.now()) {
+  const { independent, hasPrimary } = crossCheck(cluster);
+  const maxTier = Math.max(...cluster.items.map((i) => TIER_WEIGHT[i.tier] || 1));
+  const recency = Math.max(0, ...cluster.items.map((i) => score(i, now) - (TIER_WEIGHT[i.tier] || 1)));
+  return independent + maxTier + (hasPrimary ? 2 : 0) + recency;
+}
+
+// Pick the single best eligible story. Returns the representative item (primary
+// first, else highest tier) enriched with the de-duplicated corroboration list,
+// or null when nothing clears PASS 2 (held-back stories wait for a 2nd source).
+export function selectStory(clusters, now = Date.now()) {
+  const eligible = clusters.filter((c) => crossCheck(c).eligible);
+  if (!eligible.length) return null;
+
+  const best = eligible
+    .map((c) => ({ c, s: scoreCluster(c, now) }))
+    .sort((a, b) => b.s - a.s)[0].c;
+
+  const rep = [...best.items].sort((a, b) => {
+    const prim = (isPrimary(b) ? 1 : 0) - (isPrimary(a) ? 1 : 0);
+    if (prim) return prim;
+    return (TIER_WEIGHT[b.tier] || 1) - (TIER_WEIGHT[a.tier] || 1);
+  })[0];
+
+  const seen = new Set();
+  const corroboration = [];
+  for (const it of best.items) {
+    if (seen.has(it.source)) continue;
+    seen.add(it.source);
+    corroboration.push({ source: it.source, url: it.url, title: it.title, type: it.type, tier: it.tier });
+  }
+  const cc = crossCheck(best);
+  return {
+    pick: { ...rep, corroboration, independentSources: cc.independent, hasPrimary: cc.hasPrimary },
+    cluster: best,
+  };
 }
 
 // ---- Safety firewall (keyword backstop) -----------------------------------

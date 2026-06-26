@@ -49,6 +49,20 @@ test("normalizeDraft caps sources, keeps the original, dedupes", () => {
   assert.equal(new Set(d.sources).size, d.sources.length); // no dupes
 });
 
+test("normalizeDraft cites every corroborating source from cross-check", () => {
+  const corroboration = [
+    { source: "DroneDJ", url: "https://a.com/x" },
+    { source: "sUAS News", url: "https://b.com/x" },
+    { source: "Breaking Defense", url: "https://c.com/x" },
+  ];
+  const candidate = { ...CANDIDATE, corroboration };
+  const d = normalizeDraft({ body: "x", sources: ["https://model-found.com"] }, candidate);
+  for (const c of corroboration) {
+    assert.ok(d.sources.includes(c.url), `must cite ${c.source}`);
+  }
+  assert.ok(d.sources.includes(candidate.url)); // original retained too
+});
+
 test("normalizeDraft strips leaked <cite> markup but keeps the text", () => {
   const d = normalizeDraft(
     { tldr: 'See <cite index="2-1">the spec</cite>.', body: 'Body <cite index="3-4">claim</cite> here.' },

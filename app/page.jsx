@@ -37,7 +37,6 @@ export default async function HomePage() {
             {latest.map((p) => (
               <div className="latest-item" key={p.slug}>
                 <Link href={`/articles/${p.slug}`}>{p.title}</Link>
-                <span className="read">{p.minutesRead} min</span>
               </div>
             ))}
             <Link href="/section/news" className="more">

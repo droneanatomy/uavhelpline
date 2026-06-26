@@ -16,7 +16,7 @@ export default function SiteFooter() {
     <footer className="site-footer">
       <div className="container f-inner">
         <Link href="/" className="f-mark" aria-label="UAVHelpline home">
-          uãvhëlplíne
+          <img src="/uavhelpline-logo-white.png" alt="UAVHelpline" />
         </Link>
 
         <div className="f-social" aria-label="Social media">

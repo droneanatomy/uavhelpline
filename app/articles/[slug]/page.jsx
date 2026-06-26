@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { marked } from "marked";
 import { getPublished, getBySlug, getByCategory } from "../../../lib/content";
 import { categoryLabel, categoryColor } from "../../../lib/categories";
+import SetHeaderMeta from "../../../components/SetHeaderMeta";
 
 // Regenerate at most once per minute so newly published posts appear live.
 export const revalidate = 60;
@@ -45,6 +46,11 @@ export default async function ArticlePage({ params, searchParams }) {
 
   return (
     <article className="container article">
+      <SetHeaderMeta
+        section={categoryLabel(post.category)}
+        headline={post.title}
+        sectionHref={`/section/${post.category}`}
+      />
       {post.status !== "published" && (
         <div className="safety-flag" style={{ background: "#eff6ff", borderColor: "#bfdbfe", color: "#1e40af" }}>
           Draft preview — not yet published.
