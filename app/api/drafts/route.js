@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import { getDrafts, getPublished, getBySlug } from "../../../lib/content";
+import { getDrafts, getPublished, getBySlug, POSTS_TAG } from "../../../lib/content";
 import { slugify, frontmatter } from "../../../scripts/lib/filter.mjs";
 import {
   isSupabaseConfigured,
@@ -195,6 +196,7 @@ export async function PUT(request) {
       })
       .eq("slug", slug); // any status; status column left untouched
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    revalidateTag(POSTS_TAG); // edit may touch a published post
     return NextResponse.json({ ok: true, slug });
   }
 
@@ -215,5 +217,6 @@ export async function PUT(request) {
     // status preserved from existing frontmatter (draft stays draft, published stays published)
   };
   fs.writeFileSync(target.full, matter.stringify(fields.body, data), "utf8");
+  revalidateTag(POSTS_TAG); // edit may touch a published post
   return NextResponse.json({ ok: true, slug });
 }
