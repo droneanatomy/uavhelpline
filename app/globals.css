@@ -70,9 +70,9 @@ a:hover { text-decoration: underline; }
 /* Centered wordmark — spans both rows so the beats flank its lower half */
 .masthead-branding { grid-column: 2; grid-row: 1 / span 2; align-self: self-end; justify-self:center; }
 .masthead-branding__logo { display: block; line-height: 0; }
-.masthead-branding__logo img { display: block; height: 72px; width: auto; }
+.masthead-branding__logo img { display: block; height: 92px; width: auto; }
 /* Home: lift the centered wordmark up a little above the beats */
-.masthead:not(.masthead--article) .masthead-branding { margin-bottom: -16px; }
+.masthead:not(.masthead--article) .masthead-branding { margin-bottom: -25px; }
 .masthead-branding__logo:hover { text-decoration: none; }
 
 /* Beats flanking the wordmark on row 2 */
