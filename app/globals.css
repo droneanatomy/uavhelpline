@@ -151,6 +151,27 @@ a:hover { text-decoration: underline; }
 .side-story:hover h3 a,
 .side-story:hover .dek { color: var(--cobalt); }
 
+/* Mobile: .cat-card stacks like .card (image on top, text below) */
+@media (max-width: 859px) {
+  .cat-card { display: flex; flex-direction: column; }
+  .cat-card img, .cat-card .cat-image { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 2px; }
+  .cat-card .kick { display: block; font-family: var(--mono); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin: 13px 0 6px; }
+  .cat-card .kick:hover { text-decoration: underline; }
+  .cat-card h3 { font-family: var(--headline); font-weight: 700; font-size: 18px; line-height: 1.22; margin: 0 0 8px; letter-spacing: -0.015em; }
+  .cat-card .dek { font-family: var(--serif); font-size: 15px; color: var(--ink); margin: 0 0 10px; line-height: 1.5; }
+  .cat-card .by { font-family: var(--mono); font-size: 10px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; }
+  .cat-card p {
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;              /* standard, for browsers that support it */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
 @media (min-width: 860px) {
   .cat-card {display:flex; flex-direction: row; gap: 16px}
   .cat-card img { width: 240px; aspect-ratio: 8/5; object-fit: cover; border-radius: 2px; }
@@ -307,6 +328,7 @@ a:hover { text-decoration: underline; }
   .section-aside { position: static; }
   .section-aside h1 { font-size: 30px; }
   .section-share { display: none;}
+  .section-grid { width: auto;}
 }
 
 
