@@ -24,10 +24,20 @@ export async function GET(request) {
     );
   }
 
+  // Log start/finish so every run leaves a visible trail in Vercel logs /
+  // Observability — even when nothing is drafted (picked:false writes nothing).
+  const startedAt = new Date().toISOString();
+  console.log(`[cron] start ${startedAt}`);
   try {
     const result = await runPipeline({});
-    return NextResponse.json({ ok: true, ...result });
+    console.log(
+      `[cron] done picked=${result.picked} ` +
+        `${result.picked ? `slug=${result.slug}` : `reason="${result.reason}"`} ` +
+        `stats=${JSON.stringify(result.stats || {})}`
+    );
+    return NextResponse.json({ ok: true, ranAt: startedAt, ...result });
   } catch (err) {
-    return NextResponse.json({ ok: false, error: String(err?.message || err) }, { status: 500 });
+    console.error(`[cron] error: ${err?.stack || err}`);
+    return NextResponse.json({ ok: false, ranAt: startedAt, error: String(err?.message || err) }, { status: 500 });
   }
 }
