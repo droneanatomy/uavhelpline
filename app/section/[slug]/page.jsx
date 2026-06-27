@@ -32,24 +32,6 @@ export default async function SectionPage({ params }) {
   const cat = CATEGORIES.find((c) => c.slug === params.slug);
   if (!cat) return notFound();
 
-  if (cat.slug === "database") {
-    return (
-      <div className="container section-page">
-        <SetHeaderMeta section={cat.label} sectionHref={`/section/${cat.slug}`} />
-        <div className="section-layout">
-          <SectionAside cat={cat} />
-          <div className="section-main">
-            <p className="empty">
-              The structured database of UAVs, manufacturers, components, and
-              certifications is built up automatically from published coverage.
-              Entries will appear here as the library grows.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const posts = await getByCategory(cat.slug);
   const featured = posts[0];
   const rest = posts.slice(1);

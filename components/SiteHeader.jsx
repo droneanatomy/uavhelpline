@@ -41,7 +41,7 @@ function Nav() {
   return (
     <div className="masthead-navigation">
       <div className="masthead-navigation__cta">
-        <Link href="/admin" className="button">
+        <Link href="/newsletter" className="button">
           <span>Sign In</span>
         </Link>
       </div>
@@ -73,9 +73,9 @@ export default function SiteHeader() {
       <header className="masthead">
         <div className="masthead-content">
           <ul className="masthead-links">
-            <li><Link href="/section/database">About</Link></li>
+            <li><Link href="/about">About</Link></li>
             <li><Link href="/section/news">Latest</Link></li>
-            <li><Link href="/articles/weekly-digest-2026-06-05">Newsletter</Link></li>
+            <li><Link href="/newsletter">Newsletter</Link></li>
           </ul>
           <Logo />
           <Nav />
