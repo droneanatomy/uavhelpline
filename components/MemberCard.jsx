@@ -8,7 +8,7 @@ export default function MemberCard() {
           <Link href="#newsletter">Become a member ›</Link>
         </h3>
         <p>Support independent, technical UAV journalism.</p>
-        <Link href="#newsletter" className="join">
+        <Link href="/newsletter" className="join">
           Join now
         </Link>
       </div>
