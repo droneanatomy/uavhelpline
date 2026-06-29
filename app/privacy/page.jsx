@@ -76,7 +76,7 @@ export default function PrivacyPage() {
               We rely on a few processors who handle data on our behalf under
               their own privacy terms: <strong>Vercel</strong> (hosting and
               analytics), <strong>Google Analytics</strong> (usage measurement),
-              <strong> Loops</strong> (newsletter email delivery), and{" "}
+              <strong> Brevo</strong> (newsletter email delivery), and{" "}
               <strong>Supabase</strong> (our content database). Outbound links to
               other sites are governed by those sites' own policies.
             </p>

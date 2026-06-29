@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 
-// Loops.so no-code form endpoint. Set NEXT_PUBLIC_LOOPS_FORM_ID to your form's
-// id and submissions post straight to Loops (CORS-enabled, client-side).
-// Until it's set, the form accepts the email gracefully so the page is usable.
-const LOOPS_FORM_ID = process.env.NEXT_PUBLIC_LOOPS_FORM_ID;
-
+// Posts to /api/subscribe, which forwards to Brevo server-side (the Brevo API
+// key stays on the server). Until BREVO_API_KEY is set, the route accepts the
+// email gracefully and the form shows a friendly "opening soon" message.
 export default function NewsletterForm() {
   const [email, setEmail] = useState("");
   const [state, setState] = useState("idle"); // idle | loading | done | error
@@ -17,27 +15,26 @@ export default function NewsletterForm() {
     const value = email.trim();
     if (!value) return;
 
-    // Not connected to Loops yet — accept gracefully (no data sent).
-    if (!LOOPS_FORM_ID) {
-      setState("done");
-      setMsg("Thanks — sign-ups open shortly. You'll be among the first on the list.");
-      return;
-    }
-
     setState("loading");
     try {
-      const res = await fetch(`https://app.loops.so/api/newsletter-form/${LOOPS_FORM_ID}`, {
+      const res = await fetch("/api/subscribe", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ email: value }).toString(),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: value }),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success !== false) {
+      if (res.ok && data.ok) {
         setState("done");
-        setMsg("You're on the list — watch your inbox.");
+        setMsg(
+          data.pending
+            ? "Thanks — sign-ups open shortly. You'll be among the first on the list."
+            : data.already
+              ? "You're already subscribed — watch your inbox."
+              : "You're on the list — watch your inbox."
+        );
       } else {
         setState("error");
-        setMsg(data.message || "Something went wrong. Please try again.");
+        setMsg(data.error || "Something went wrong. Please try again.");
       }
     } catch {
       setState("error");
