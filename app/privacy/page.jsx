@@ -111,7 +111,7 @@ export default function PrivacyPage() {
             <h2>Contact</h2>
             <p>
               Questions about this policy or your data? Email us at{" "}
-              <a href="mailto:droneanatomy@gmail.com">droneanatomy@gmail.com</a>.
+              <a href="mailto:contact@uavhelpline.com">contact@uavhelpline.com</a>.
             </p>
           </div>
         </div>
