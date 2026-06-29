@@ -15,6 +15,21 @@ export const metadata = {
   },
   description:
     "Independent, evidence-first intelligence on the global drone industry: technology, engineering, components, autonomy, and regulation.",
+  openGraph: {
+    type: "website",
+    siteName: "UAVHelpline",
+    title: "UAVHelpline — Drone Intelligence",
+    description:
+      "Independent, evidence-first intelligence on the global drone industry.",
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "UAVHelpline" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "UAVHelpline — Drone Intelligence",
+    description:
+      "Independent, evidence-first intelligence on the global drone industry.",
+    images: ["/og-default.png"],
+  },
 };
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
