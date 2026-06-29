@@ -43,6 +43,7 @@ export async function POST(request) {
 
     // 201 = created, 204 = updated (updateEnabled). Both are success.
     if (res.ok || res.status === 204) {
+      console.log(`[subscribe] ok (${res.status})`);
       return NextResponse.json({ ok: true });
     }
 
@@ -51,11 +52,17 @@ export async function POST(request) {
     if (res.status === 400 && data?.code === "duplicate_parameter") {
       return NextResponse.json({ ok: true, already: true });
     }
+    // Provider error detail goes to server logs only — never to the visitor.
+    console.error(`[subscribe] Brevo ${res.status} ${data?.code || ""}: ${data?.message || ""}`.trim());
     return NextResponse.json(
-      { ok: false, error: data?.message || "Subscription failed. Please try again." },
+      { ok: false, error: "We couldn't add you to the list just now. Please try again shortly." },
       { status: 502 }
     );
-  } catch {
-    return NextResponse.json({ ok: false, error: "Network error. Please try again." }, { status: 502 });
+  } catch (err) {
+    console.error(`[subscribe] request failed: ${err?.message || err}`);
+    return NextResponse.json(
+      { ok: false, error: "We couldn't add you to the list just now. Please try again shortly." },
+      { status: 502 }
+    );
   }
 }
