@@ -15,10 +15,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }) {
   const post = await getBySlug(params.slug);
   if (!post) return { title: "Not found — UAVHelpline" };
-  // Social platforms don't render SVG, so fall back to the raster default
-  // for placeholder/SVG heroes. Relative paths resolve against metadataBase.
-  const isRaster = post.image && !/\.svg($|\?)/i.test(post.image);
-  const ogImage = isRaster ? post.image : "/og-default.png";
+  // Use the hero only when it's a format social cards render everywhere
+  // (X/Twitter doesn't do AVIF, nobody does SVG); else the brand default.
+  // Relative paths resolve against metadataBase.
+  const social = post.image && /\.(jpe?g|png|webp|gif)($|\?)/i.test(post.image);
+  const ogImage = social ? post.image : "/og-default.png";
   return {
     title: `${post.title} — UAVHelpline`,
     description: post.metaDescription,
