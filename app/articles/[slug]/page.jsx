@@ -4,6 +4,7 @@ import { marked } from "marked";
 import { getPublished, getBySlug, getByCategory } from "../../../lib/content";
 import { categoryLabel, categoryColor } from "../../../lib/categories";
 import SetHeaderMeta from "../../../components/SetHeaderMeta";
+import SharePage from "../../../components/SharePage";
 
 // Regenerate at most once per minute so newly published posts appear live.
 export const revalidate = 60;
@@ -65,12 +66,16 @@ export default async function ArticlePage({ params, searchParams }) {
     .slice(0, 3);
 
   return (
-    <article className="container article">
+    <div className="container article-shell">
       <SetHeaderMeta
         section={categoryLabel(post.category)}
         headline={post.title}
         sectionHref={`/section/${post.category}`}
       />
+      <aside className="article-share" aria-label="Share this article">
+        <SharePage vertical label="" title={post.title} />
+      </aside>
+      <article className="article">
       {post.status !== "published" && (
         <div className="safety-flag" style={{ background: "#eff6ff", borderColor: "#bfdbfe", color: "#1e40af" }}>
           Draft preview — not yet published.
@@ -140,6 +145,7 @@ export default async function ArticlePage({ params, searchParams }) {
           </div>
         </div>
       )}
-    </article>
+      </article>
+    </div>
   );
 }

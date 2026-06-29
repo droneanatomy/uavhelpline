@@ -9,7 +9,7 @@ const icons = {
   email: <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 7L4 6.5V18h16V6.5L12 11z" />,
 };
 
-export default function SharePage({ title = "" }) {
+export default function SharePage({ title = "", vertical = false, label = "Share this page" }) {
   const [url, setUrl] = useState("");
   useEffect(() => setUrl(window.location.href), []);
 
@@ -23,8 +23,8 @@ export default function SharePage({ title = "" }) {
   ];
 
   return (
-    <div className="section-share">
-      <span className="section-share__label">Share this page</span>
+    <div className={`section-share${vertical ? " section-share--vertical" : ""}`}>
+      {label ? <span className="section-share__label">{label}</span> : null}
       <div className="section-share__icons">
         {links.map((l) => (
           <a key={l.key} href={l.href} aria-label={l.label} target="_blank" rel="noopener noreferrer">

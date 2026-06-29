@@ -358,6 +358,17 @@ a:hover { text-decoration: underline; }
 
 
 /* ---------- Article ---------- */
+/* Article shell: centered column with a sticky vertical share rail on the left */
+.article-shell { display: flex; justify-content: center; align-items: flex-start; gap: 28px; }
+.article-share { position: sticky; top: 104px; flex: 0 0 auto; padding-top: 56px; }
+.article-share .section-share__icons { flex-direction: column; gap: 16px; }
+.article-share .section-share__icons a { color: var(--ink-soft); }
+.article-share .section-share__icons a:hover { color: var(--cobalt); }
+@media (max-width: 880px) {
+  .article-shell { display: block; }
+  .article-share { position: static; padding: 24px 0 0; }
+  .article-share .section-share__icons { flex-direction: row; gap: 20px; }
+}
 .article { max-width: 720px; margin: 0 auto; padding-top: 44px; padding-bottom: 44px; }
 .article .cat { font-family: var(--mono); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }
 .article h1 { font-family: var(--headline); font-weight: 700; font-size: 34px; line-height: 1.14; margin: 12px 0 16px; letter-spacing: -0.02em; }
