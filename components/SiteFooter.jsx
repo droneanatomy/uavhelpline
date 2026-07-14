@@ -25,7 +25,7 @@ export default function SiteFooter() {
           <Link href="/privacy">Privacy Policy</Link>
           <Link href="/newsletter">Newsletter</Link>
           {/* <Link href="#newsletter">Become a member</Link>  */}
-          <a href="mailto:contact@uavhelpline.com">Contact</a>
+          <a href="mailto:info.uavhelpline@gmail.com">Contact</a>
         </nav>
 
         <p className="f-tagline">
