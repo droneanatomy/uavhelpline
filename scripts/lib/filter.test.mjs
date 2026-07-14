@@ -25,6 +25,11 @@ test("isRelevant keeps UAV topics and rejects politics", () => {
   // reject wins even when an allow word is present
   assert.equal(isRelevant("Drone policy debated at the airport"), false);
   assert.equal(isRelevant("A story about gardening"), false);
+  // drones-in-war coverage is now allowed
+  assert.equal(isRelevant("Combat drones on the frontline of the ongoing conflict"), true);
+  assert.equal(isRelevant("New military UAV and loitering munition tested"), true);
+  // but a bare non-drone story still isn't pulled in by a substring
+  assert.equal(isRelevant("A new software update for accounting"), false);
 });
 
 test("normalizeTitle strips case and punctuation", () => {

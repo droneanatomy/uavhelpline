@@ -6,6 +6,9 @@ export const ALLOW = [
   "uav", "drone", "uas", "counter-uav", "c-uas", "loitering", "isr",
   "payload", "autonomy", "bvlos", "swarm", "flight controller", "lidar",
   "propulsion", "battery", "certification", "regulation", "navigation",
+  // Drones in war / ongoing conflicts (specific terms — bare "war" would match
+  // "software"). The draft guardrail still keeps coverage technical, not political.
+  "warfare", "combat", "military", "battlefield", "frontline", "munition",
 ];
 
 export const REJECT = [
