@@ -150,15 +150,30 @@ export function isPrimary(item) {
   return PRIMARY_TYPES.has(item?.type);
 }
 
+// Priority brands — never miss their news. A UAV story mentioning any of these
+// is eligible on its own (even single-source) and is selected first.
+export const PRIORITY_BRANDS = ["dji", "autel", "anduril", "parrot", "skydio"];
+const PRIORITY_RE = new RegExp(`\\b(${PRIORITY_BRANDS.join("|")})\\b`, "i");
+export function isPriority(item) {
+  return PRIORITY_RE.test(`${item?.title || ""} ${item?.summary || ""}`);
+}
+
 export function crossCheck(cluster) {
   const names = new Set();
   let hasPrimary = false;
+  let hasPriority = false;
   for (const it of cluster.items) {
     names.add(it.source);
     if (isPrimary(it)) hasPrimary = true;
+    if (isPriority(it)) hasPriority = true;
   }
   const independent = names.size;
-  return { eligible: independent >= 2 || hasPrimary, independent, hasPrimary };
+  return {
+    eligible: independent >= 2 || hasPrimary || hasPriority,
+    independent,
+    hasPrimary,
+    hasPriority,
+  };
 }
 
 // ---- SCORE & SELECT -------------------------------------------------------
@@ -178,12 +193,15 @@ export function rankAndPick(items, now = Date.now()) {
   return [...items].sort((a, b) => score(b, now) - score(a, now))[0] || null;
 }
 
-// Confidence = independent-source count + best source tier + primary bonus + recency.
+// Confidence = priority-brand bonus (dominant) + independent-source count +
+// best source tier + primary bonus + recency. The priority bonus is large enough
+// that any priority-brand story outranks every non-priority one.
+const PRIORITY_BONUS = 1000;
 export function scoreCluster(cluster, now = Date.now()) {
-  const { independent, hasPrimary } = crossCheck(cluster);
+  const { independent, hasPrimary, hasPriority } = crossCheck(cluster);
   const maxTier = Math.max(...cluster.items.map((i) => TIER_WEIGHT[i.tier] || 1));
   const recency = Math.max(0, ...cluster.items.map((i) => score(i, now) - (TIER_WEIGHT[i.tier] || 1)));
-  return independent + maxTier + (hasPrimary ? 2 : 0) + recency;
+  return (hasPriority ? PRIORITY_BONUS : 0) + independent + maxTier + (hasPrimary ? 2 : 0) + recency;
 }
 
 // Pick the single best eligible story. Returns the representative item (primary
@@ -198,6 +216,8 @@ export function selectStory(clusters, now = Date.now()) {
     .sort((a, b) => b.s - a.s)[0].c;
 
   const rep = [...best.items].sort((a, b) => {
+    const prio = (isPriority(b) ? 1 : 0) - (isPriority(a) ? 1 : 0);
+    if (prio) return prio;
     const prim = (isPrimary(b) ? 1 : 0) - (isPrimary(a) ? 1 : 0);
     if (prim) return prim;
     return (TIER_WEIGHT[b.tier] || 1) - (TIER_WEIGHT[a.tier] || 1);
@@ -212,7 +232,13 @@ export function selectStory(clusters, now = Date.now()) {
   }
   const cc = crossCheck(best);
   return {
-    pick: { ...rep, corroboration, independentSources: cc.independent, hasPrimary: cc.hasPrimary },
+    pick: {
+      ...rep,
+      corroboration,
+      independentSources: cc.independent,
+      hasPrimary: cc.hasPrimary,
+      hasPriority: cc.hasPriority,
+    },
     cluster: best,
   };
 }

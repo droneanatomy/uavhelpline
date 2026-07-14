@@ -21,7 +21,7 @@ export default function SiteFooter() {
 
         <nav className="f-nav" aria-label="Footer">
           <Link href="/about">About</Link>
-          <Link href="/section/news">Sections</Link>
+          <Link href="/section/news">Latest</Link>
           <Link href="/privacy">Privacy Policy</Link>
           <Link href="/newsletter">Newsletter</Link>
           {/* <Link href="#newsletter">Become a member</Link>  */}

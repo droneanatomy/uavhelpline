@@ -11,3 +11,4 @@ npm-debug.log*
 .vercel
 .env*
 scripts/morning.log
+scripts/last-run.txt

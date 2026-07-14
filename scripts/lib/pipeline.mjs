@@ -73,9 +73,11 @@ export async function runPipeline({
     };
   }
   const { pick } = selection;
-  const basis = pick.hasPrimary
-    ? "primary source"
-    : `${pick.independentSources} independent sources`;
+  const basis = pick.hasPriority
+    ? "priority brand"
+    : pick.hasPrimary
+      ? "primary source"
+      : `${pick.independentSources} independent sources`;
   onProgress({ stage: "pick", detail: `Selected (${basis}): ${pick.title}` });
 
   if (dryRun) {
@@ -88,6 +90,7 @@ export async function runPipeline({
       corroboration: pick.corroboration,
       independentSources: pick.independentSources,
       hasPrimary: pick.hasPrimary,
+      hasPriority: pick.hasPriority,
     };
   }
 

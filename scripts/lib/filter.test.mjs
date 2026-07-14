@@ -15,6 +15,7 @@ import {
   clusterStories,
   crossCheck,
   isPrimary,
+  isPriority,
   selectStory,
 } from "./filter.mjs";
 
@@ -134,6 +135,35 @@ test("selectStory ranks eligible clusters and attaches corroboration", () => {
   assert.equal(sel.pick.corroboration.length, 2);
 
   assert.equal(selectStory([{ items: [{ source: "C", type: "news", tier: 1 }] }], now), null);
+});
+
+test("isPriority matches only the configured brands", () => {
+  assert.equal(isPriority({ title: "Skydio X10 gets a firmware update" }), true);
+  assert.equal(isPriority({ title: "New Parrot Anafi variant" }), true);
+  assert.equal(isPriority({ title: "Anduril lands defense contract" }), true);
+  assert.equal(isPriority({ title: "Wingtra survey drone review" }), false);
+});
+
+test("priority brands: single-source DJI story is eligible and picked first", () => {
+  const now = Date.UTC(2026, 0, 1);
+  const recent = new Date(now - 3600 * 1000).toISOString();
+  const clusters = [
+    // Strong non-priority story: 3 independent tier-1 sources.
+    { items: [
+      { title: "New BVLOS ruling takes effect", source: "A", type: "news", tier: 1, url: "https://a/1", publishedAt: recent },
+      { title: "New BVLOS ruling takes effect", source: "B", type: "news", tier: 1, url: "https://b/1", publishedAt: recent },
+      { title: "New BVLOS ruling takes effect", source: "C", type: "news", tier: 1, url: "https://c/1", publishedAt: recent },
+    ] },
+    // Single-source DJI story — must still win.
+    { items: [
+      { title: "DJI unveils the new Mavic 5 Pro", source: "DroneDJ", type: "news", tier: 1, url: "https://d/1", publishedAt: recent },
+    ] },
+  ];
+  const sel = selectStory(clusters, now);
+  assert.ok(sel);
+  assert.match(sel.pick.title, /DJI/);
+  assert.equal(sel.pick.hasPriority, true);
+  assert.equal(sel.pick.independentSources, 1);
 });
 
 test("slugify and frontmatter produce expected output", () => {
