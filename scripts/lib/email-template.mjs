@@ -33,10 +33,10 @@ function focusedRow(p, siteUrl) {
     <td style="padding:0 0 22px 0;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td width="180" valign="top" style="padding-right:16px;">
-            <a href="${esc(href)}" target="_blank"><img src="${esc(img)}" width="180" alt="" style="display:block;width:180px;height:auto;border-radius:2px;border:0;" /></a>
+          <td class="stack" width="180" valign="top" style="padding-right:16px;">
+            <a href="${esc(href)}" target="_blank"><img src="${esc(img)}" width="180" alt="" style="display:block;width:180px;max-width:180px;height:auto;border-radius:2px;border:0;" /></a>
           </td>
-          <td valign="top">
+          <td class="stack" valign="top">
             <div style="font:600 11px/1.2 'Courier New',monospace;letter-spacing:.06em;text-transform:uppercase;color:${COBALT};margin:0 0 6px;">${esc(p.category)}</div>
             <a href="${esc(href)}" target="_blank" style="font:700 17px/1.25 Arial,Helvetica,sans-serif;color:${INK};text-decoration:none;">${esc(p.title)}</a>
             <div style="font:400 14px/1.5 Georgia,serif;color:${INK_SOFT};margin:8px 0 0;">${esc(p.take)}</div>
@@ -66,11 +66,20 @@ export function renderEmailHtml(issue, { siteUrl = "", webUrl = "" } = {}) {
 
   return `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="light"><title>${esc(issue.subject)}</title></head>
+<meta name="color-scheme" content="light"><title>${esc(issue.subject)}</title>
+<style>
+  img { max-width: 100%; }
+  @media only screen and (max-width: 620px) {
+    .container { width: 100% !important; }
+    .stack { display: block !important; width: 100% !important; padding: 0 0 14px 0 !important; }
+    .stack img { width: 100% !important; max-width: 100% !important; height: auto !important; }
+    .px { padding-left: 18px !important; padding-right: 18px !important; }
+  }
+</style></head>
 <body style="margin:0;padding:0;background:#f2f3f5;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f2f3f5;">
 <tr><td align="center" style="padding:24px 12px;">
-  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:4px;overflow:hidden;">
+  <table role="presentation" class="container" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:4px;overflow:hidden;">
     <!-- masthead -->
     <tr><td style="background:${COBALT};padding:22px 28px;" align="center">
       <img src="${esc(logo)}" height="30" alt="UAVHelpline" style="display:block;height:30px;border:0;">
