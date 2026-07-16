@@ -68,7 +68,7 @@ a:hover { text-decoration: underline; }
 .search-form input:focus { outline: none; }
 .search-form.open input { width: 200px; opacity: 1; padding: 6px 4px; border-bottom-color: var(--line); }
 .search-form.open input:focus { border-bottom-color: var(--cobalt); }
-@media (max-width: 600px) { .search-form.open input { width: 140px; } }
+@media (max-width: 600px) { .search-form.open input { width: 140px; } .masthead-navigation__cta { display: none; } }
 
 /* Centered wordmark — spans both rows so the beats flank its lower half */
 .masthead-branding { grid-column: 2; grid-row: 1 / span 2; align-self: self-end; justify-self:center; }
