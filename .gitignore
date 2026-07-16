@@ -12,3 +12,6 @@ npm-debug.log*
 .env*
 scripts/morning.log
 scripts/last-run.txt
+scripts/weekly.log
+scripts/last-weekly.txt
+scripts/weekly-preview.html

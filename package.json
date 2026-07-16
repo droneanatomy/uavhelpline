@@ -9,6 +9,8 @@
     "lint": "next lint",
     "morning": "node --env-file-if-exists=.env.local scripts/morning-research.mjs",
     "morning:dry": "node --env-file-if-exists=.env.local scripts/morning-research.mjs --dry-run",
+    "weekly": "node --env-file-if-exists=.env.local scripts/weekly-newsletter.mjs",
+    "weekly:dry": "node --env-file-if-exists=.env.local scripts/weekly-newsletter.mjs --dry-run",
     "seed": "node --env-file-if-exists=.env.local scripts/seed-supabase.mjs",
     "test": "node --test \"scripts/lib/*.test.mjs\""
   },
