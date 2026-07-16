@@ -140,7 +140,7 @@ a:hover { text-decoration: underline; }
 .search-results { margin-bottom: 48px; }
 
 @media (max-width: 860px) {
-  .masthead { grid-template-columns: 1fr auto; column-gap: 16px; margin: 0; padding: 0 16px; }
+  .masthead { grid-template-columns: 1fr auto; column-gap: 16px; margin: 0 16px; width: auto; }
   .masthead-links { display: none; }
   .masthead-branding { grid-column: 1; grid-row: 1; justify-self: start; align-self: center; }
   .masthead-eyebrow { display: none; }
