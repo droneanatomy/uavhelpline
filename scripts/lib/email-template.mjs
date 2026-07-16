@@ -66,27 +66,28 @@ export function renderEmailHtml(issue, { siteUrl = "", webUrl = "" } = {}) {
 
   return `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="light"><title>${esc(issue.subject)}</title>
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>${esc(issue.subject)}</title>
 <style>
   img { max-width: 100%; }
   @media only screen and (max-width: 620px) {
-    .container { width: 100% !important; }
+    .wrap { padding: 0 !important; }
+    .container { width: 100% !important; border-radius: 0 !important; }
+    .px { padding-left: 16px !important; padding-right: 16px !important; }
     .stack { display: block !important; width: 100% !important; padding: 0 0 14px 0 !important; }
     .stack img { width: 100% !important; max-width: 100% !important; height: auto !important; }
-    .px { padding-left: 18px !important; padding-right: 18px !important; }
   }
 </style></head>
 <body style="margin:0;padding:0;background:#f2f3f5;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f2f3f5;">
-<tr><td align="center" style="padding:24px 12px;">
+<tr><td class="wrap" align="center" style="padding:24px 12px;">
   <table role="presentation" class="container" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:4px;overflow:hidden;">
     <!-- masthead -->
-    <tr><td style="background:${COBALT};padding:22px 28px;" align="center">
+    <tr><td class="px" style="background:${COBALT};padding:22px 28px;" align="center">
       <img src="${esc(logo)}" height="30" alt="UAVHelpline" style="display:block;height:30px;border:0;">
     </td></tr>
     <tr><td style="height:4px;background:${MIDNIGHT};font-size:0;line-height:0;">&nbsp;</td></tr>
 
-    <tr><td style="padding:28px 28px 6px;">
+    <tr><td class="px" style="padding:28px 28px 6px;">
       <div style="font:600 12px/1.3 'Courier New',monospace;letter-spacing:.08em;text-transform:uppercase;color:${COBALT};">UAVHelpline Weekly</div>
       <div style="font:400 15px/1.6 Georgia,serif;color:${INK_SOFT};margin:12px 0 0;">${esc(issue.intro)}</div>
     </td></tr>
@@ -94,7 +95,7 @@ export function renderEmailHtml(issue, { siteUrl = "", webUrl = "" } = {}) {
     ${
       lead
         ? `<!-- lead -->
-    <tr><td style="padding:22px 28px 8px;">
+    <tr><td class="px" style="padding:22px 28px 8px;">
       <a href="${esc(leadHref)}" target="_blank"><img src="${esc(leadImg)}" width="544" alt="" style="display:block;width:100%;height:auto;border-radius:3px;border:0;"></a>
       <div style="font:600 11px/1.2 'Courier New',monospace;letter-spacing:.06em;text-transform:uppercase;color:${COBALT};margin:16px 0 6px;">${esc(lead.category)}</div>
       <a href="${esc(leadHref)}" target="_blank" style="font:800 25px/1.2 Arial,Helvetica,sans-serif;color:${INK};text-decoration:none;letter-spacing:-.01em;">${esc(lead.title)}</a>
@@ -107,7 +108,7 @@ export function renderEmailHtml(issue, { siteUrl = "", webUrl = "" } = {}) {
     ${
       focusedHtml
         ? `<!-- focused -->
-    <tr><td style="padding:26px 28px 0;">
+    <tr><td class="px" style="padding:26px 28px 0;">
       <div style="font:700 13px/1 Arial,Helvetica,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:${INK};border-bottom:2px solid ${COBALT};padding-bottom:10px;margin-bottom:20px;">In focus</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${focusedHtml}</table>
     </td></tr>`
@@ -117,7 +118,7 @@ export function renderEmailHtml(issue, { siteUrl = "", webUrl = "" } = {}) {
     ${
       roundupHtml
         ? `<!-- roundup -->
-    <tr><td style="padding:8px 28px 4px;">
+    <tr><td class="px" style="padding:8px 28px 4px;">
       <div style="font:700 13px/1 Arial,Helvetica,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:${INK};border-bottom:2px solid ${COBALT};padding-bottom:10px;margin-bottom:8px;">The rest of the week</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${roundupHtml}</table>
     </td></tr>`
@@ -125,7 +126,7 @@ export function renderEmailHtml(issue, { siteUrl = "", webUrl = "" } = {}) {
     }
 
     <!-- footer -->
-    <tr><td style="padding:28px;background:${COBALT};" align="center">
+    <tr><td class="px" style="padding:28px;background:${COBALT};" align="center">
       <img src="${esc(logo)}" height="22" alt="UAVHelpline" style="display:block;height:22px;border:0;margin:0 auto 12px;">
       <div style="font:400 12px/1.6 Arial,Helvetica,sans-serif;color:#dfe3ff;">Independent, evidence-first intelligence on the global drone industry.</div>
       <div style="font:400 12px/1.8 Arial,Helvetica,sans-serif;color:#dfe3ff;margin-top:10px;">
