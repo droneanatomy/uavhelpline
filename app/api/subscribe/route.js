@@ -35,7 +35,7 @@ export async function POST(request) {
   }
 
   const listId = Number(process.env.BREVO_LIST_ID);
-  const attributes = { FIRSTNAME: name, INDUSTRY: industry };
+  const attributes = { FIRSTNAME: name, JOB_TITLE: industry };
   if (linkedin) attributes.LINKEDIN = linkedin;
   if (about) attributes.ABOUT = about;
   const payload = { email, updateEnabled: true, attributes };
