@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import Link from "next/link";
 
 function DroneMark() {
   return (
@@ -26,14 +24,6 @@ function DroneMark() {
 }
 
 export default function NewsletterSignup({ compact = false }) {
-  const [done, setDone] = useState(false);
-  const [email, setEmail] = useState("");
-
-  function submit(e) {
-    e.preventDefault();
-    if (email.trim()) setDone(true);
-  }
-
   if (compact) {
     return (
       <section className="news-compact">
@@ -45,20 +35,9 @@ export default function NewsletterSignup({ compact = false }) {
             regulation — one fast read.
           </p>
         </div>
-        {done ? (
-          <p className="nl-done">Thanks — you're on the list. Watch your inbox.</p>
-        ) : (
-          <form className="nl-form" onSubmit={submit}>
-            <input
-              type="email"
-              placeholder="Email address"
-              aria-label="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <button type="submit">Subscribe free</button>
-          </form>
-        )}
+        <Link className="nl-form" href="/newsletter" style={{ display: "inline-block" }}>
+          <button type="button">Subscribe free</button>
+        </Link>
       </section>
     );
   }
@@ -72,27 +51,10 @@ export default function NewsletterSignup({ compact = false }) {
         <h2>A world of drones in your inbox</h2>
         <p>
           Exclusive reporting and analysis across defence, commercial,
-          components, and regulation — distilled into one fast read, twice a
-          week, every week. See the full picture of how UAV technology is
-          shaping the world.
+          components, and regulation — distilled into one fast read, every week.
+          See the full picture of how UAV technology is shaping the world.
         </p>
-        {done ? (
-          <p className="nl-done">Thanks — you're on the list. Watch your inbox.</p>
-        ) : (
-          <form className="nl-form" onSubmit={submit}>
-            <label className="nl-label" htmlFor="nl-email">
-              Email
-            </label>
-            <input
-              id="nl-email"
-              type="email"
-              aria-label="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <button type="submit">Sign up</button>
-          </form>
-        )}
+        <Link className="nl-cta" href="/newsletter">Subscribe →</Link>
       </div>
       <img
         className="news-module__phone"

@@ -16,8 +16,16 @@ export async function POST(request) {
   }
 
   const email = String(body?.email || "").trim();
+  const name = String(body?.name || "").trim();
+  const industry = String(body?.industry || "").trim();
+  const linkedin = String(body?.linkedin || "").trim();
+  const about = String(body?.about || "").trim();
+
   if (!EMAIL_RE.test(email)) {
     return NextResponse.json({ ok: false, error: "Please enter a valid email address." }, { status: 400 });
+  }
+  if (!name || !industry) {
+    return NextResponse.json({ ok: false, error: "Please add your name and area of interest." }, { status: 400 });
   }
 
   const key = (process.env.BREVO_API_KEY || "").trim();
@@ -27,7 +35,10 @@ export async function POST(request) {
   }
 
   const listId = Number(process.env.BREVO_LIST_ID);
-  const payload = { email, updateEnabled: true };
+  const attributes = { FIRSTNAME: name, INDUSTRY: industry };
+  if (linkedin) attributes.LINKEDIN = linkedin;
+  if (about) attributes.ABOUT = about;
+  const payload = { email, updateEnabled: true, attributes };
   if (Number.isFinite(listId) && listId > 0) payload.listIds = [listId];
 
   try {

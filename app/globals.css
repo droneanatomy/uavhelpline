@@ -128,14 +128,22 @@ a:hover { text-decoration: underline; }
 @media (max-width: 600px) { .notfound h1 { font-size: 30px; } .notfound { padding: 56px 0 72px; } }
 
 /* Newsletter subscribe form (/newsletter) */
-.subscribe-form { display: flex; gap: 10px; margin-top: 22px; max-width: 480px; flex-wrap: wrap; }
-.subscribe-form input { flex: 1; min-width: 220px; font-family: var(--display); font-size: 15px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 3px; }
-.subscribe-form input:focus { outline: none; border-color: var(--cobalt); }
-.subscribe-form button { font-family: var(--mono); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; background: var(--cobalt); color: #fff; border: 1px solid var(--cobalt); border-radius: 3px; padding: 12px 24px; cursor: pointer; }
+.subscribe-form { display: block; margin-top: 24px; max-width: 460px; }
+.subscribe-field { margin: 0 0 16px; }
+.subscribe-field label { display: block; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); margin: 0 0 7px; }
+.subscribe-field label .opt { text-transform: none; letter-spacing: 0; color: var(--ink-soft); font-weight: 400; }
+.subscribe-form input, .subscribe-form select, .subscribe-form textarea { width: 100%; font-family: var(--display); font-size: 15px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 3px; background: #fff; color: var(--ink); }
+.subscribe-form textarea { resize: vertical; line-height: 1.5; }
+.subscribe-form input:focus, .subscribe-form select:focus, .subscribe-form textarea:focus { outline: none; border-color: var(--cobalt); }
+.subscribe-form button { font-family: var(--mono); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; background: var(--cobalt); color: #fff; border: 1px solid var(--cobalt); border-radius: 3px; padding: 12px 28px; cursor: pointer; margin-top: 4px; }
 .subscribe-form button:hover { background: transparent; color: var(--cobalt); }
 .subscribe-form button:disabled { opacity: 0.6; cursor: default; }
-.subscribe-done { font-family: var(--display); font-size: 16px; color: var(--cobalt); margin-top: 22px; max-width: 480px; }
-.subscribe-error { flex-basis: 100%; font-family: var(--display); font-size: 13px; color: var(--magenta); margin: 4px 0 0; }
+.subscribe-done { font-family: var(--display); font-size: 16px; color: var(--cobalt); margin-top: 24px; max-width: 460px; }
+.subscribe-error { font-family: var(--display); font-size: 13px; color: var(--magenta); margin: 10px 0 0; }
+
+/* Homepage band CTA -> /newsletter */
+.news-module .nl-cta { display: inline-block; margin-top: 4px; background: var(--pink); color: var(--midnight); border: 1px solid var(--pink); border-radius: 3px; font-family: var(--mono); font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; font-size: 13px; padding: 13px 26px; text-decoration: none; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+.news-module .nl-cta:hover { background: transparent; color: var(--pink); border-color: var(--pink); text-decoration: none; }
 .search-count { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); margin: 22px 0 14px; }
 .search-results { margin-bottom: 48px; }
 
