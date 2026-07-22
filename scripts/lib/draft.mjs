@@ -99,17 +99,22 @@ export function buildUserPrompt(candidate) {
 // ```json ... ``` code fence and any prose around the object.
 export function extractJson(text) {
   if (!text) return null;
-  let t = text.trim();
+  const braces = (s) => {
+    const start = s.indexOf("{");
+    const end = s.lastIndexOf("}");
+    if (start === -1 || end === -1 || end < start) return null;
+    try {
+      return JSON.parse(s.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  };
+  const t = text.trim();
+  // Try the ```json fence first, but fall back to the whole text: the match is
+  // non-greedy, so a fenced code block *inside* the markdown body closes the
+  // outer fence early and truncates the JSON.
   const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fence) t = fence[1].trim();
-  const start = t.indexOf("{");
-  const end = t.lastIndexOf("}");
-  if (start === -1 || end === -1 || end < start) return null;
-  try {
-    return JSON.parse(t.slice(start, end + 1));
-  } catch {
-    return null;
-  }
+  return (fence && braces(fence[1].trim())) || braces(t);
 }
 
 // Concatenate the text blocks from an Anthropic Messages response. (web_search

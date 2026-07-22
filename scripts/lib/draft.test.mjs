@@ -21,6 +21,20 @@ test("extractJson pulls the object out of surrounding text", () => {
   assert.equal(extractJson('{bad json}'), null);
 });
 
+test("extractJson survives a code fence inside the drafted body", () => {
+  // The non-greedy fence match closes on the body's inner ``` — the whole-text
+  // fallback is what rescues it. This really happened on a live draft.
+  const raw = [
+    "Here is the post.",
+    "```json",
+    '{"title":"T","body":"Intro\\n\\n```\\nsome snippet\\n```\\n\\nOutro"}',
+    "```",
+  ].join("\n");
+  const out = extractJson(raw);
+  assert.equal(out?.title, "T");
+  assert.match(out.body, /some snippet/);
+});
+
 test("joinTextBlocks keeps only text blocks", () => {
   const content = [
     { type: "server_tool_use", name: "web_search" },
