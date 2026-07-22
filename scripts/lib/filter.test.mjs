@@ -17,6 +17,7 @@ import {
   isPrimary,
   isPriority,
   isSignificant,
+  isWarEvent,
   selectStory,
   selectStories,
 } from "./filter.mjs";
@@ -206,6 +207,52 @@ test("selectStories returns several, max one per priority brand", () => {
   assert.equal(picks.length, 3, "publishes multiple important stories in one run");
   const titles = picks.map((p) => p.pick.title).join(" | ");
   assert.ok(!/Mini 6/.test(titles), "only one story per priority brand per run");
+});
+
+test("isWarEvent separates real strikes from vendor 'attack drone' news", () => {
+  assert.equal(isWarEvent({ title: "Ukraine strikes warehouses tied to Russian drone production" }), true);
+  assert.equal(isWarEvent({ title: "Air defences shot down 40 Shahed drones overnight" }), true);
+  assert.equal(isWarEvent({ title: "Anduril brings the thunder with autonomous tiltrotor attack drone concept" }), false);
+  assert.equal(isWarEvent({ title: "BAE Systems unveils the UK's first autonomous combat aircraft" }), false);
+});
+
+test("a major single-source war event from a strong outlet is eligible", () => {
+  const strike = { items: [{ title: "Ukraine strikes a Russian drone plant", source: "The War Zone", type: "news", tier: 2, url: "https://t/1" }] };
+  const cc = crossCheck(strike);
+  assert.equal(cc.eligible, true, "a single strong outlet is enough for a live strike");
+  assert.equal(cc.hasWarEvent, true);
+
+  const weak = { items: [{ title: "Ukraine strikes a Russian drone plant", source: "Some Blog", type: "news", tier: 3, url: "https://s/1" }] };
+  assert.equal(crossCheck(weak).eligible, false, "a tier-3 single source still isn't enough");
+});
+
+test("selectStories reserves a slot for a war event the beat cap squeezed out", () => {
+  const now = Date.UTC(2026, 0, 1);
+  const recent = new Date(now - 3600 * 1000).toISOString();
+  const two = (title, s, url) => ({
+    items: [s, `${s}2`].map((src, i) => ({
+      title, source: src, category: "defence-tech", type: "news", tier: 1,
+      url: `${url}${i}`, publishedAt: recent,
+    })),
+  });
+  const strike = {
+    items: [{
+      title: "Ukraine strikes a Russian drone production site",
+      source: "The War Zone", category: "defence-tech", type: "news", tier: 2,
+      url: "https://twz/1", publishedAt: recent,
+    }],
+  };
+  const picks = selectStories(
+    [two("BAE unveils a combat aircraft", "A", "https://a/"),
+     two("Anduril reveals an attack drone concept", "B", "https://b/"),
+     two("Skydio launches the X20 for defence", "C", "https://c/"),
+     strike],
+    { max: 3, now }
+  );
+  assert.ok(
+    picks.some((p) => /Ukraine strikes/.test(p.pick.title)),
+    "a real strike must not be omitted in favour of vendor announcements"
+  );
 });
 
 test("slugify and frontmatter produce expected output", () => {

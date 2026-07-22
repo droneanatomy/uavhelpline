@@ -8,7 +8,10 @@ export const ALLOW = [
   "propulsion", "battery", "certification", "regulation", "navigation",
   // Drones in war / ongoing conflicts (specific terms — bare "war" would match
   // "software"). The draft guardrail still keeps coverage technical, not political.
-  "warfare", "combat", "military", "battlefield", "frontline", "munition",
+  "warfare", "combat", "military", "battlefield", "frontline",
+  // UAV stories that never say "drone" — platforms, classes and conflict terms.
+  "unmanned", "uncrewed", "remotely piloted", "rpas", "fpv", "quadcopter",
+  "mq-9", "mq-1", "rq-4", "bayraktar", "shahed", "counter-drone", "one-way attack",
 ];
 
 export const REJECT = [
@@ -182,34 +185,77 @@ const TRIVIAL = [
   "spotted", "giveaway", "unboxing", "everything we know", "vs ", "comparison",
 ];
 
+// Operational conflict events are newsworthy in their own right — a strike or a
+// shoot-down is major news even when only one trusted outlet has it yet.
+const CONFLICT = [
+  "strike", "attack", "shot down", "shoot down", "downed", "intercept",
+  "offensive", "incursion", "combat", "front line", "frontline", "war ",
+];
+
+export function isConflict(item) {
+  const t = `${item?.title || ""} ${item?.summary || ""}`.toLowerCase();
+  if (TRIVIAL.some((w) => t.includes(w))) return false;
+  return CONFLICT.some((w) => t.includes(w));
+}
+
+// A live war EVENT (a strike actually happened) — distinct from a vendor
+// announcing an "attack drone" or a "combat aircraft". These must never be missed.
+const WAR_EVENT = [
+  "strikes", "struck", "attacked", "attack on", "shot down", "shoot down",
+  "downed", "killed", "barrage", "incursion", "targeted", "wave of",
+];
+
+export function isWarEvent(item) {
+  const t = `${item?.title || ""} ${item?.summary || ""}`.toLowerCase();
+  if (TRIVIAL.some((w) => t.includes(w))) return false;
+  return WAR_EVENT.some((w) => t.includes(w));
+}
+
 export function isSignificant(item) {
   const t = `${item?.title || ""} ${item?.summary || ""}`.toLowerCase();
   if (TRIVIAL.some((w) => t.includes(w))) return false;
-  return SIGNIFICANT.some((w) => t.includes(w));
+  return SIGNIFICANT.some((w) => t.includes(w)) || CONFLICT.some((w) => t.includes(w));
 }
+
+// Tier 1-2 sources are the strongest outlets in the registry; a major story from
+// one of them stands on its own. (Conflict reporting is rarely duplicated across
+// our feed set, so requiring 2 sources silently dropped every drone-strike story.)
+const STRONG_TIER = 2;
 
 export function crossCheck(cluster) {
   const names = new Set();
   let hasPrimary = false;
   let hasPriority = false;
   let hasSignificant = false;
+  let hasConflict = false;
+  let hasWarEvent = false;
+  let bestTier = 99;
   for (const it of cluster.items) {
     names.add(it.source);
     if (isPrimary(it)) hasPrimary = true;
     if (isPriority(it)) hasPriority = true;
     if (isSignificant(it)) hasSignificant = true;
+    if (isConflict(it)) hasConflict = true;
+    if (isWarEvent(it)) hasWarEvent = true;
+    bestTier = Math.min(bestTier, Number(it.tier) || 3);
   }
   const independent = names.size;
   // A priority brand only earns a free pass when the story is actually
   // newsworthy; otherwise it needs the normal corroboration like anything else.
   const priorityQualifies = hasPriority && hasSignificant;
+  // Major single-source news (incl. conflict/strike reporting) from a strong outlet.
+  const majorSingle = (hasSignificant || hasWarEvent) && bestTier <= STRONG_TIER;
   return {
-    eligible: independent >= 2 || hasPrimary || priorityQualifies,
+    eligible: independent >= 2 || hasPrimary || priorityQualifies || majorSingle,
     independent,
     hasPrimary,
     hasPriority,
     hasSignificant,
+    hasConflict,
+    hasWarEvent,
     priorityQualifies,
+    majorSingle,
+    bestTier,
   };
 }
 
@@ -234,7 +280,8 @@ export function rankAndPick(items, now = Date.now()) {
 // moderate priority-brand nudge — so a well-covered story from anywhere can
 // still outrank a thin priority-brand item.
 export function scoreCluster(cluster, now = Date.now()) {
-  const { independent, hasPrimary, hasSignificant, priorityQualifies } = crossCheck(cluster);
+  const { independent, hasPrimary, hasSignificant, hasConflict, hasWarEvent, priorityQualifies } =
+    crossCheck(cluster);
   const maxTier = Math.max(...cluster.items.map((i) => TIER_WEIGHT[i.tier] || 1));
   const recency = Math.max(0, ...cluster.items.map((i) => score(i, now) - (TIER_WEIGHT[i.tier] || 1)));
   return (
@@ -242,6 +289,11 @@ export function scoreCluster(cluster, now = Date.now()) {
     maxTier +
     (hasPrimary ? 2 : 0) +
     (hasSignificant ? 3 : 0) +
+    // Conflict coverage is major news even when only one outlet has it yet. The
+    // war-event nudge stays small on purpose — selectStories() already reserves a
+    // slot for one, so a big bonus here would just flip the run to all-war.
+    (hasConflict ? 2 : 0) +
+    (hasWarEvent ? 1 : 0) +
     (priorityQualifies ? 4 : 0) +
     recency
   );
@@ -282,7 +334,7 @@ function buildSelection(cluster) {
 // Pick up to `max` distinct stories, best first. Diversity guards stop one run
 // from becoming all-DJI or all one beat. Everything after the first pick must be
 // genuinely important (newsworthy, corroborated, or primary-sourced).
-export function selectStories(clusters, { max = 1, now = Date.now() } = {}) {
+export function selectStories(clusters, { max = 1, now = Date.now(), ensureWarEvent = true } = {}) {
   const ranked = clusters
     .filter((c) => crossCheck(c).eligible)
     .map((c) => ({ c, s: scoreCluster(c, now) }))
@@ -303,6 +355,20 @@ export function selectStories(clusters, { max = 1, now = Date.now() } = {}) {
     if (brand) usedBrands.add(brand);
     perCategory[cat] = (perCategory[cat] || 0) + 1;
     out.push(sel);
+  }
+
+  // Never omit a major conflict story. Vendor defence announcements ("attack
+  // drone concept") often outrank an actual strike on raw score and then eat the
+  // per-beat cap, so when the run has room for several posts, reserve one slot
+  // for the best real-world war event.
+  if (ensureWarEvent && max >= 2 && out.length && !out.some((s) => crossCheck(s.cluster).hasWarEvent)) {
+    const chosen = new Set(out.map((s) => s.cluster));
+    const war = ranked.find(({ c }) => !chosen.has(c) && crossCheck(c).hasWarEvent);
+    if (war) {
+      const sel = buildSelection(war.c);
+      if (out.length >= max) out[out.length - 1] = sel;
+      else out.push(sel);
+    }
   }
   return out;
 }
