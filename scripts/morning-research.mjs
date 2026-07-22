@@ -27,10 +27,15 @@ async function main() {
     return;
   }
   if (result.dryRun) {
-    console.log(`[dry-run] would draft slug "${result.slug}". No files written.`);
+    console.log(`[dry-run] would draft ${result.count} post(s):`);
+    result.posts.forEach((p, i) => console.log(`  ${i + 1}. ${p.slug}`));
+    console.log(`[dry-run] No files written.`);
     return;
   }
-  console.log(`[${today}] Drafted: ${result.saved} (path: ${result.draftPath}, ${result.sources.length} sources, safetyReview=${result.safetyReview}).`);
+  console.log(`[${today}] Drafted ${result.count} post(s):`);
+  for (const p of result.posts) {
+    console.log(`  - ${p.saved} (path: ${p.draftPath}, ${p.sources.length} sources, safetyReview=${p.safetyReview})`);
+  }
   console.log(`[${today}] Backend: ${USE_SUPABASE ? "Supabase" : "local files"}. Review at /admin.`);
 }
 

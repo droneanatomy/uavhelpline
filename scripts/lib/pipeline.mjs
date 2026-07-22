@@ -10,7 +10,7 @@ import {
   dropCovered,
   clusterStories,
   crossCheck,
-  selectStory,
+  selectStories,
   slugify,
 } from "./filter.mjs";
 import { draftPostStream } from "./draft.mjs";
@@ -21,6 +21,8 @@ export async function runPipeline({
   recencyDays = Number(process.env.UAVHELPLINE_RECENCY_DAYS || 3),
   today = new Date().toISOString().slice(0, 10),
   dryRun = false,
+  // Publish several stories in a day when several are genuinely important.
+  maxPosts = Number(process.env.UAVHELPLINE_MAX_POSTS_PER_RUN || 3),
   deps = {},
 } = {}) {
   const collectFn = deps.collect || collect;
@@ -62,54 +64,64 @@ export async function runPipeline({
     eligible: clusters.filter((c) => crossCheck(c).eligible).length,
   };
 
-  // 5. PASS 2 · CROSS-CHECK + 6. SCORE & SELECT — single best eligible story.
-  const selection = selectStory(clusters);
-  if (!selection) {
+  // 5. PASS 2 · CROSS-CHECK + 6. SCORE & SELECT — up to `maxPosts` stories.
+  const selections = selectStories(clusters, { max: Math.max(1, maxPosts) });
+  if (!selections.length) {
     return {
       picked: false,
       stats,
       reason:
-        "No story cleared cross-check today — nothing corroborated by ≥2 independent trusted sources or a primary source.",
+        "No story cleared cross-check today — nothing corroborated by ≥2 independent trusted sources, a primary source, or a newsworthy priority-brand announcement.",
     };
   }
-  const { pick } = selection;
-  const basis = pick.hasPriority
-    ? "priority brand"
-    : pick.hasPrimary
-      ? "primary source"
-      : `${pick.independentSources} independent sources`;
-  onProgress({ stage: "pick", detail: `Selected (${basis}): ${pick.title}` });
+
+  const basisOf = (p) =>
+    p.hasPriority && p.significant
+      ? "priority brand"
+      : p.hasPrimary
+        ? "primary source"
+        : `${p.independentSources} independent sources`;
 
   if (dryRun) {
+    selections.forEach(({ pick }) =>
+      onProgress({ stage: "pick", detail: `Selected (${basisOf(pick)}): ${pick.title}` })
+    );
+    const first = selections[0].pick;
     return {
       picked: true,
       dryRun: true,
       stats,
-      slug: slugify(pick.title),
-      pick,
-      corroboration: pick.corroboration,
-      independentSources: pick.independentSources,
-      hasPrimary: pick.hasPrimary,
-      hasPriority: pick.hasPriority,
+      count: selections.length,
+      posts: selections.map(({ pick }) => ({ slug: slugify(pick.title), title: pick.title, pick })),
+      slug: slugify(first.title),
+      pick: first,
+      corroboration: first.corroboration,
+      independentSources: first.independentSources,
+      hasPrimary: first.hasPrimary,
+      hasPriority: first.hasPriority,
     };
   }
 
-  // 7. DRAFT ONE (cites every corroborating source), then 8. IMAGE + SAVE.
-  const draft = await draftFn(pick, { onProgress });
-  onProgress({ stage: "save", detail: "Saving draft…" });
-  const { slug, saved } = await finalizeFn(draft, pick, today);
+  // 7. DRAFT EACH (citing every corroborating source), then 8. IMAGE + SAVE.
+  const posts = [];
+  for (const { pick } of selections) {
+    onProgress({ stage: "pick", detail: `Selected (${basisOf(pick)}): ${pick.title}` });
+    const draft = await draftFn(pick, { onProgress });
+    onProgress({ stage: "save", detail: "Saving draft…" });
+    const { slug, saved } = await finalizeFn(draft, pick, today);
+    posts.push({
+      slug,
+      saved,
+      title: draft.title,
+      draftPath: draft.draftPath,
+      sources: draft.sources,
+      corroboration: pick.corroboration,
+      independentSources: pick.independentSources,
+      hasPrimary: pick.hasPrimary,
+      safetyReview: draft.safetyReview,
+    });
+  }
 
-  return {
-    picked: true,
-    stats,
-    slug,
-    saved,
-    title: draft.title,
-    draftPath: draft.draftPath,
-    sources: draft.sources,
-    corroboration: pick.corroboration,
-    independentSources: pick.independentSources,
-    hasPrimary: pick.hasPrimary,
-    safetyReview: draft.safetyReview,
-  };
+  // Top-level fields mirror the first post so existing callers keep working.
+  return { picked: true, stats, count: posts.length, posts, ...posts[0] };
 }

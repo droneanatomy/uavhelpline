@@ -29,7 +29,8 @@ export async function POST(request) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const result = await runPipeline({ onProgress: (p) => send(controller, p) });
+        // One post per manual run — the 60s function cap can't fit several drafts.
+        const result = await runPipeline({ maxPosts: 1, onProgress: (p) => send(controller, p) });
         if (!result.picked) {
           send(controller, { done: true, skipped: true, reason: result.reason });
         } else {

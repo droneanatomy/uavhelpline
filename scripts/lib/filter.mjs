@@ -153,29 +153,63 @@ export function isPrimary(item) {
   return PRIMARY_TYPES.has(item?.type);
 }
 
-// Priority brands — never miss their news. A UAV story mentioning any of these
-// is eligible on its own (even single-source) and is selected first.
+// Priority brands — their news matters most, but ONLY when it is genuinely
+// newsworthy: a big official announcement, a product launch, or a regulatory
+// development. Deals, reviews, rumours, leaks and roundups never qualify.
 export const PRIORITY_BRANDS = ["dji", "autel", "anduril", "parrot", "skydio"];
 const PRIORITY_RE = new RegExp(`\\b(${PRIORITY_BRANDS.join("|")})\\b`, "i");
 export function isPriority(item) {
   return PRIORITY_RE.test(`${item?.title || ""} ${item?.summary || ""}`);
+}
+export function priorityBrandOf(item) {
+  const m = `${item?.title || ""} ${item?.summary || ""}`.match(PRIORITY_RE);
+  return m ? m[1].toLowerCase() : null;
+}
+
+// Newsworthiness signals: official announcements, launches, regulation, and
+// major programme/corporate moves.
+const SIGNIFICANT = [
+  "launch", "unveil", "announce", "introduc", "debut", "reveal", "rollout", "roll out",
+  "certif", "approval", "approve", "authoriz", "authoris", "waiver", "regulat", "ruling",
+  "legislation", " law", "ban ", "bans ", "mandate", "compliance", "faa", "easa", "caa",
+  "dgca", "recall", "acquir", "acquisition", "merger", "contract", "awarded", "funding",
+  "raises", "partnership", "first flight", "milestone", "record",
+];
+// Low-value chatter that must never earn priority treatment.
+const TRIVIAL = [
+  "deal", "discount", "sale", "coupon", "best ", "review", "hands-on", "hands on",
+  "top 5", "top 10", "buying guide", "how to", "tips", "rumor", "rumour", "leak",
+  "spotted", "giveaway", "unboxing", "everything we know", "vs ", "comparison",
+];
+
+export function isSignificant(item) {
+  const t = `${item?.title || ""} ${item?.summary || ""}`.toLowerCase();
+  if (TRIVIAL.some((w) => t.includes(w))) return false;
+  return SIGNIFICANT.some((w) => t.includes(w));
 }
 
 export function crossCheck(cluster) {
   const names = new Set();
   let hasPrimary = false;
   let hasPriority = false;
+  let hasSignificant = false;
   for (const it of cluster.items) {
     names.add(it.source);
     if (isPrimary(it)) hasPrimary = true;
     if (isPriority(it)) hasPriority = true;
+    if (isSignificant(it)) hasSignificant = true;
   }
   const independent = names.size;
+  // A priority brand only earns a free pass when the story is actually
+  // newsworthy; otherwise it needs the normal corroboration like anything else.
+  const priorityQualifies = hasPriority && hasSignificant;
   return {
-    eligible: independent >= 2 || hasPrimary || hasPriority,
+    eligible: independent >= 2 || hasPrimary || priorityQualifies,
     independent,
     hasPrimary,
     hasPriority,
+    hasSignificant,
+    priorityQualifies,
   };
 }
 
@@ -196,31 +230,29 @@ export function rankAndPick(items, now = Date.now()) {
   return [...items].sort((a, b) => score(b, now) - score(a, now))[0] || null;
 }
 
-// Confidence = priority-brand bonus (dominant) + independent-source count +
-// best source tier + primary bonus + recency. The priority bonus is large enough
-// that any priority-brand story outranks every non-priority one.
-const PRIORITY_BONUS = 1000;
+// Balanced confidence: corroboration counts most, then newsworthiness, then a
+// moderate priority-brand nudge — so a well-covered story from anywhere can
+// still outrank a thin priority-brand item.
 export function scoreCluster(cluster, now = Date.now()) {
-  const { independent, hasPrimary, hasPriority } = crossCheck(cluster);
+  const { independent, hasPrimary, hasSignificant, priorityQualifies } = crossCheck(cluster);
   const maxTier = Math.max(...cluster.items.map((i) => TIER_WEIGHT[i.tier] || 1));
   const recency = Math.max(0, ...cluster.items.map((i) => score(i, now) - (TIER_WEIGHT[i.tier] || 1)));
-  return (hasPriority ? PRIORITY_BONUS : 0) + independent + maxTier + (hasPrimary ? 2 : 0) + recency;
+  return (
+    independent * 3 +
+    maxTier +
+    (hasPrimary ? 2 : 0) +
+    (hasSignificant ? 3 : 0) +
+    (priorityQualifies ? 4 : 0) +
+    recency
+  );
 }
 
-// Pick the single best eligible story. Returns the representative item (primary
-// first, else highest tier) enriched with the de-duplicated corroboration list,
-// or null when nothing clears PASS 2 (held-back stories wait for a 2nd source).
-export function selectStory(clusters, now = Date.now()) {
-  const eligible = clusters.filter((c) => crossCheck(c).eligible);
-  if (!eligible.length) return null;
-
-  const best = eligible
-    .map((c) => ({ c, s: scoreCluster(c, now) }))
-    .sort((a, b) => b.s - a.s)[0].c;
-
-  const rep = [...best.items].sort((a, b) => {
-    const prio = (isPriority(b) ? 1 : 0) - (isPriority(a) ? 1 : 0);
-    if (prio) return prio;
+// Build the {pick, cluster} shape: representative item (most newsworthy, then
+// primary, then highest tier) plus the de-duplicated corroboration list.
+function buildSelection(cluster) {
+  const rep = [...cluster.items].sort((a, b) => {
+    const sig = (isSignificant(b) ? 1 : 0) - (isSignificant(a) ? 1 : 0);
+    if (sig) return sig;
     const prim = (isPrimary(b) ? 1 : 0) - (isPrimary(a) ? 1 : 0);
     if (prim) return prim;
     return (TIER_WEIGHT[b.tier] || 1) - (TIER_WEIGHT[a.tier] || 1);
@@ -228,12 +260,12 @@ export function selectStory(clusters, now = Date.now()) {
 
   const seen = new Set();
   const corroboration = [];
-  for (const it of best.items) {
+  for (const it of cluster.items) {
     if (seen.has(it.source)) continue;
     seen.add(it.source);
     corroboration.push({ source: it.source, url: it.url, title: it.title, type: it.type, tier: it.tier });
   }
-  const cc = crossCheck(best);
+  const cc = crossCheck(cluster);
   return {
     pick: {
       ...rep,
@@ -241,9 +273,43 @@ export function selectStory(clusters, now = Date.now()) {
       independentSources: cc.independent,
       hasPrimary: cc.hasPrimary,
       hasPriority: cc.hasPriority,
+      significant: cc.hasSignificant,
     },
-    cluster: best,
+    cluster,
   };
+}
+
+// Pick up to `max` distinct stories, best first. Diversity guards stop one run
+// from becoming all-DJI or all one beat. Everything after the first pick must be
+// genuinely important (newsworthy, corroborated, or primary-sourced).
+export function selectStories(clusters, { max = 1, now = Date.now() } = {}) {
+  const ranked = clusters
+    .filter((c) => crossCheck(c).eligible)
+    .map((c) => ({ c, s: scoreCluster(c, now) }))
+    .sort((a, b) => b.s - a.s);
+
+  const out = [];
+  const usedBrands = new Set();
+  const perCategory = {};
+  for (const { c } of ranked) {
+    if (out.length >= max) break;
+    const cc = crossCheck(c);
+    if (out.length && !(cc.hasSignificant || cc.independent >= 2 || cc.hasPrimary)) continue;
+    const sel = buildSelection(c);
+    const brand = priorityBrandOf(sel.pick);
+    if (brand && usedBrands.has(brand)) continue; // one story per priority brand per run
+    const cat = sel.pick.category || "news";
+    if ((perCategory[cat] || 0) >= 2) continue; // at most two per beat
+    if (brand) usedBrands.add(brand);
+    perCategory[cat] = (perCategory[cat] || 0) + 1;
+    out.push(sel);
+  }
+  return out;
+}
+
+// Single best eligible story, or null when nothing clears PASS 2.
+export function selectStory(clusters, now = Date.now()) {
+  return selectStories(clusters, { max: 1, now })[0] || null;
 }
 
 // ---- Safety firewall (keyword backstop) -----------------------------------

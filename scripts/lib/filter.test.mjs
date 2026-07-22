@@ -16,7 +16,9 @@ import {
   crossCheck,
   isPrimary,
   isPriority,
+  isSignificant,
   selectStory,
+  selectStories,
 } from "./filter.mjs";
 
 test("isRelevant keeps UAV topics and rejects politics", () => {
@@ -149,26 +151,61 @@ test("isPriority matches only the configured brands", () => {
   assert.equal(isPriority({ title: "Wingtra survey drone review" }), false);
 });
 
-test("priority brands: single-source DJI story is eligible and picked first", () => {
+test("isSignificant gates on newsworthiness, not brand chatter", () => {
+  assert.equal(isSignificant({ title: "DJI unveils the Mavic 5 Pro" }), true);
+  assert.equal(isSignificant({ title: "FAA approves a new BVLOS waiver" }), true);
+  assert.equal(isSignificant({ title: "Best DJI drone deals this week" }), false);
+  assert.equal(isSignificant({ title: "DJI Mini 5 review: hands-on" }), false);
+  assert.equal(isSignificant({ title: "DJI Mavic 6 rumor: everything we know" }), false);
+});
+
+test("a trivial priority-brand item is NOT eligible; a real announcement is", () => {
+  const trivial = { items: [{ title: "Best DJI drone deals this week", source: "DroneDJ", type: "news", tier: 1, url: "https://d/1" }] };
+  assert.equal(crossCheck(trivial).eligible, false, "DJI deals post must not qualify");
+
+  const launch = { items: [{ title: "DJI unveils the Mavic 5 Pro", source: "DroneDJ", type: "news", tier: 1, url: "https://d/2" }] };
+  const cc = crossCheck(launch);
+  assert.equal(cc.eligible, true, "a DJI launch qualifies on its own");
+  assert.equal(cc.priorityQualifies, true);
+});
+
+test("a well-corroborated story outranks a thin priority-brand item", () => {
   const now = Date.UTC(2026, 0, 1);
   const recent = new Date(now - 3600 * 1000).toISOString();
-  const clusters = [
-    // Strong non-priority story: 3 independent tier-1 sources.
-    { items: [
-      { title: "New BVLOS ruling takes effect", source: "A", type: "news", tier: 1, url: "https://a/1", publishedAt: recent },
-      { title: "New BVLOS ruling takes effect", source: "B", type: "news", tier: 1, url: "https://b/1", publishedAt: recent },
-      { title: "New BVLOS ruling takes effect", source: "C", type: "news", tier: 1, url: "https://c/1", publishedAt: recent },
-    ] },
-    // Single-source DJI story — must still win.
-    { items: [
-      { title: "DJI unveils the new Mavic 5 Pro", source: "DroneDJ", type: "news", tier: 1, url: "https://d/1", publishedAt: recent },
-    ] },
-  ];
-  const sel = selectStory(clusters, now);
-  assert.ok(sel);
-  assert.match(sel.pick.title, /DJI/);
-  assert.equal(sel.pick.hasPriority, true);
-  assert.equal(sel.pick.independentSources, 1);
+  const bigStory = {
+    items: ["A", "B", "C"].map((s) => ({
+      title: "FAA approves sweeping BVLOS rule", source: s, type: "news", tier: 1,
+      url: `https://${s}/1`, publishedAt: recent,
+    })),
+  };
+  const thinDji = {
+    items: [{ title: "DJI announces a firmware update", source: "DroneDJ", type: "news", tier: 1, url: "https://d/3", publishedAt: recent }],
+  };
+  const sel = selectStory([thinDji, bigStory], now);
+  assert.match(sel.pick.title, /FAA/, "3-source regulatory story should beat a 1-source DJI item");
+});
+
+test("selectStories returns several, max one per priority brand", () => {
+  const now = Date.UTC(2026, 0, 1);
+  const recent = new Date(now - 3600 * 1000).toISOString();
+  const mk = (title, s, category, url) => ({
+    items: [
+      { title, source: s, category, type: "news", tier: 1, url, publishedAt: recent },
+      { title, source: `${s}2`, category, type: "news", tier: 1, url: `${url}b`, publishedAt: recent },
+    ],
+  });
+  const picks = selectStories(
+    [
+      mk("DJI unveils the Mavic 5 Pro", "A", "commercial-drones", "https://a/1"),
+      mk("DJI launches the Mini 6", "B", "commercial-drones", "https://b/1"),
+      mk("EASA approves a new certification path", "C", "regulations", "https://c/1"),
+      mk("Skydio launches the X20 for defence", "D", "defence-tech", "https://d/1"),
+    ],
+    { max: 3, now }
+  );
+  assert.equal(picks.length, 3, "publishes multiple important stories in one run");
+  const titles = picks.map((p) => p.pick.title).join(" | ");
+  assert.ok(!/Mini 6/.test(titles), "only one story per priority brand per run");
 });
 
 test("slugify and frontmatter produce expected output", () => {
