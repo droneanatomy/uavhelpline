@@ -12,6 +12,11 @@ export const ALLOW = [
   // UAV stories that never say "drone" — platforms, classes and conflict terms.
   "unmanned", "uncrewed", "remotely piloted", "rpas", "fpv", "quadcopter",
   "mq-9", "mq-1", "rq-4", "bayraktar", "shahed", "counter-drone", "one-way attack",
+  // Named drone/UAV industry events (their headlines often omit "drone").
+  // Only inherently-UAV events belong here — generic "expo"/"conference" would
+  // let unrelated trade shows through the topic gate, so those live in EVENTS.
+  "xponential", "interdrone", "commercial uav expo", "dronex", "amsterdam drone week",
+  "world drone congress", "commercial uav news", "auvsi",
 ];
 
 export const REJECT = [
@@ -211,10 +216,37 @@ export function isWarEvent(item) {
   return WAR_EVENT.some((w) => t.includes(w));
 }
 
+// Industry events & expos are newsworthy: the show itself, dates/registration,
+// keynote and exhibitor line-ups, and the product reveals that happen there.
+// Generic terms are safe here (unlike ALLOW) because isEvent only ever sees
+// items that already cleared the drones-only topic gate.
+const EVENTS = [
+  "expo", "trade show", "tradeshow", "conference", "summit", "symposium",
+  "exhibition", "air show", "airshow", "convention", "keynote", "exhibitor",
+  "call for papers", "xponential", "interdrone", "commercial uav expo",
+  "dronex", "amsterdam drone week", "world drone congress",
+];
+// Word-boundary match so "expo" doesn't fire on "export" and "summit" doesn't
+// fire on "summit"-in-a-company-name mid-word.
+const EVENTS_RE = new RegExp(`\\b(${EVENTS.join("|")})\\b`, "i");
+
+// Match the TITLE only: an actual expo/conference story names the event up
+// front, whereas arXiv abstracts and defence summaries mention "conference" or
+// "symposium" in passing — matching those would wrongly mark them as events.
+export function isEvent(item) {
+  const t = `${item?.title || ""}`.toLowerCase();
+  if (TRIVIAL.some((w) => t.includes(w))) return false;
+  return EVENTS_RE.test(t);
+}
+
 export function isSignificant(item) {
   const t = `${item?.title || ""} ${item?.summary || ""}`.toLowerCase();
   if (TRIVIAL.some((w) => t.includes(w))) return false;
-  return SIGNIFICANT.some((w) => t.includes(w)) || CONFLICT.some((w) => t.includes(w));
+  return (
+    SIGNIFICANT.some((w) => t.includes(w)) ||
+    CONFLICT.some((w) => t.includes(w)) ||
+    isEvent(item) // title-only — see isEvent for why
+  );
 }
 
 // Tier 1-2 sources are the strongest outlets in the registry; a major story from
@@ -229,6 +261,7 @@ export function crossCheck(cluster) {
   let hasSignificant = false;
   let hasConflict = false;
   let hasWarEvent = false;
+  let hasEvent = false;
   let bestTier = 99;
   for (const it of cluster.items) {
     names.add(it.source);
@@ -237,6 +270,7 @@ export function crossCheck(cluster) {
     if (isSignificant(it)) hasSignificant = true;
     if (isConflict(it)) hasConflict = true;
     if (isWarEvent(it)) hasWarEvent = true;
+    if (isEvent(it)) hasEvent = true;
     bestTier = Math.min(bestTier, Number(it.tier) || 3);
   }
   const independent = names.size;
@@ -253,6 +287,7 @@ export function crossCheck(cluster) {
     hasSignificant,
     hasConflict,
     hasWarEvent,
+    hasEvent,
     priorityQualifies,
     majorSingle,
     bestTier,
@@ -280,7 +315,7 @@ export function rankAndPick(items, now = Date.now()) {
 // moderate priority-brand nudge — so a well-covered story from anywhere can
 // still outrank a thin priority-brand item.
 export function scoreCluster(cluster, now = Date.now()) {
-  const { independent, hasPrimary, hasSignificant, hasConflict, hasWarEvent, priorityQualifies } =
+  const { independent, hasPrimary, hasSignificant, hasConflict, hasWarEvent, hasEvent, priorityQualifies } =
     crossCheck(cluster);
   const maxTier = Math.max(...cluster.items.map((i) => TIER_WEIGHT[i.tier] || 1));
   const recency = Math.max(0, ...cluster.items.map((i) => score(i, now) - (TIER_WEIGHT[i.tier] || 1)));
@@ -294,6 +329,8 @@ export function scoreCluster(cluster, now = Date.now()) {
     // slot for one, so a big bonus here would just flip the run to all-war.
     (hasConflict ? 2 : 0) +
     (hasWarEvent ? 1 : 0) +
+    // Small nudge so an expo/conference story surfaces without crowding out news.
+    (hasEvent ? 1 : 0) +
     (priorityQualifies ? 4 : 0) +
     recency
   );

@@ -18,6 +18,7 @@ import {
   isPriority,
   isSignificant,
   isWarEvent,
+  isEvent,
   selectStory,
   selectStories,
 } from "./filter.mjs";
@@ -253,6 +254,27 @@ test("selectStories reserves a slot for a war event the beat cap squeezed out", 
     picks.some((p) => /Ukraine strikes/.test(p.pick.title)),
     "a real strike must not be omitted in favour of vendor announcements"
   );
+});
+
+test("isEvent detects drone expos/conferences but not review chatter", () => {
+  assert.equal(isEvent({ title: "Commercial UAV Expo 2026 opens registration and keynote line-up" }), true);
+  assert.equal(isEvent({ title: "XPONENTIAL 2026: what to expect on the show floor" }), true);
+  assert.equal(isEvent({ title: "Skydio to exhibit new dock at Amsterdam Drone Week" }), true);
+  assert.equal(isEvent({ title: "DJI Mini 5 review: hands-on" }), false);
+  assert.equal(isEvent({ title: "Best drone deals this week" }), false);
+  // Word boundaries: "expo" must not fire on "export", and a conference named
+  // only in the summary must not count (title-only).
+  assert.equal(isEvent({ title: "US export change to boost Emirati drones" }), false);
+  assert.equal(isEvent({ title: "New drone unveiled", summary: "presented at a robotics conference" }), false);
+});
+
+test("an expo makes a story significant and eligible", () => {
+  assert.equal(isSignificant({ title: "InterDrone announces 2026 dates and speaker slate" }), true);
+  // A named UAV event passes the topic gate even without the word 'drone'.
+  assert.equal(isRelevant("XPONENTIAL 2026 exhibitor list published"), true);
+  const cluster = { items: [{ title: "Commercial UAV Expo unveils 2026 agenda", source: "Commercial UAV News", type: "news", tier: 1, url: "https://c/1" }] };
+  assert.equal(crossCheck(cluster).hasEvent, true);
+  assert.equal(crossCheck(cluster).eligible, true, "a tier-1 event story stands on its own");
 });
 
 test("slugify and frontmatter produce expected output", () => {
